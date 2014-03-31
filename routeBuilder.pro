@@ -26,7 +26,7 @@ LIBS += -L$$TRIKCONTROL_BINDIR -ltrikControl
 }
 
 
-DESTDIR = build
+DESTDIR = bin
 OBJECTS_DIR = .obj
 UI_DIR = .ui
 MOC_DIR = .moc

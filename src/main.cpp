@@ -11,16 +11,18 @@ int main(int argc, char *argv[])
 	RouteBuilder routeInspector(app.thread());
 
 	QTimer timer;
-	int const trackingTimeout = 10 * 1000; //msec
+	int const trackingTimeout = 30 * 1000; //msec
 
 	while(true)
 	{
 		cout << endl << endl << "Type:\n"
-			 << "1) tracking 10 sec to file\n"
+			 << "1) tracking 30 sec to file\n"
 			 << "2) write motor ports list\n"
-			 << "3) write digital ports list\n"
-			 << "4) read some sensor\n"
-			 << "0) exit\n> ";
+			 << "3) read some sensor\n"
+			 << "4) power on\n"
+			 << "5) stop power\n"
+			 << "9) continue exec\n"
+			 << "0) exit program\n> ";
 		int decision = 0;
 		cin >> decision;
 		cout << endl;
@@ -30,6 +32,7 @@ int main(int argc, char *argv[])
 		case 1:
 			routeInspector.startTracking();
 			timer.singleShot(trackingTimeout, &routeInspector, SLOT(stop()));
+			return app.exec();
 			break;
 		case 2:
 			foreach (QString const &line, routeInspector.motorList())
@@ -40,23 +43,29 @@ int main(int argc, char *argv[])
 
 			break;
 		case 3:
-			foreach (QString const &line, routeInspector.digitalList())
-			{
-				cout << line.toStdString() << " ";
-			}
-			cout << endl;
-			break;
-		case 4:
 			cout << routeInspector.readSomeSensor();
 			break;
+		case 4:
+			routeInspector.setPowerOnMotor(50);
+			break;
+		case 5:
+			routeInspector.setPowerOnMotor(0);
 		default:
+			break;
+		}
+
+		if (decision == 9)
+		{
 			break;
 		}
 
 		if (decision == 0)
 		{
-			break;
+			return 0;
 		}
+
+		if (timer.isActive())
+			break;
 
 	}
 

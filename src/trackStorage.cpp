@@ -9,7 +9,7 @@ TrackStorage::~TrackStorage()
 	mSensor1.clear();
 }
 
-void TrackStorage::addValue(int const &value)
+void TrackStorage::addValue(float const &value)
 {
 	if (mSensor1.count() == 0 || qAbs(mSensor1.last().first - value) > epsilon)
 	{
@@ -31,7 +31,7 @@ void TrackStorage::printToFile()
 	}
 
 	QString line("");
-	QPair<int, int> current;
+	QPair<float, int> current;
 	for(int i = 0; i < mSensor1.count(); i++)
 	{
 		current = mSensor1.at(i);

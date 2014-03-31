@@ -12,12 +12,12 @@ public:
 	TrackStorage();
 	~TrackStorage();
 
-	void addValue(int const &value);
+	void addValue(float const &value);
 	void printToFile();
 
 protected:
-	int const epsilon = 10;
+	int const epsilon = 20;
 
-	QVector<QPair<int,int> > mSensor1;
+	QVector<QPair<float,int> > mSensor1;
 };
 

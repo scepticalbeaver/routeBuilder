@@ -8,6 +8,7 @@
 #include <QtCore/QDebug>
 
 #include "trikControl/brick.h"
+#include "trackStorage.h"
 
 using namespace trikControl;
 
@@ -18,8 +19,9 @@ public:
 	explicit RouteBuilder(QThread *mainThread);
 
 	QStringList motorList();
-	QStringList digitalList();
 	float readSomeSensor();
+
+	void setPowerOnMotor(int const power);
 
 
 public slots:
@@ -34,17 +36,19 @@ protected:
 		, repeatRoute
 	};
 
-	unsigned int const trackingTimeout = 800; // msec
+	unsigned int const trackingTimeout = 100; // msec
 
 	QFile *mCollectedData;
 	Brick mBrick;
 	QTimer mTracker;
+	TrackStorage mStorage;
 	State mWorkMode;
 	QStringList mTrackingMotors;
 	unsigned int mTrackingCounter;
 
 	void init();
 	void initTracker();
+	void resetEncoders();
 
 
 protected slots:
