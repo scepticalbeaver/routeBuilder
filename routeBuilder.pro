@@ -1,4 +1,4 @@
-TRIKCONTROL_BINDIR = $$PWD/trikRuntime/bin/release
+TRIKCONTROL_BINDIR = $$PWD/trikRuntime/bin/x86-debug
 TRIKCONTROL_DIR = $$PWD/trikRuntime/trikControl
 
 QT += core
@@ -16,7 +16,7 @@ INCLUDEPATH = \
 	$$PWD \
 	$$TRIKCONTROL_DIR/include \
 
-LIBS += -L$$TRIKCONTROL_BINDIR -ltrikControl
+LIBS += -L$$TRIKCONTROL_BINDIR -ltrikControl-x86-d
 
 !macx {
 	QMAKE_LFLAGS += -Wl,-O1,-rpath,.
