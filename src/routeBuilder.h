@@ -30,7 +30,6 @@ protected:
 	};
 
 	unsigned int const trackingTimeout = 50; // msec
-	unsigned int const timeForTracking = 10 * 1000; // 10 sec
 
 	QFile *mCollectedData;
 	Brick mBrick;
@@ -45,5 +44,4 @@ protected:
 
 protected slots:
 	void readSensors();
-
 };

@@ -3,6 +3,7 @@
 RouteBuilder::RouteBuilder(QThread *mainThread)
 	: mCollectedData(nullptr)
 	, mBrick(*mainThread, QString("config.xml"))
+	, mWorkMode(sleep)
 	, mTrackingCounter(0)
 {
 
@@ -48,7 +49,7 @@ void RouteBuilder::init()
 
 void RouteBuilder::initTracker()
 {
-	mCollectedData = new QFile("routeBuilder_collected" + QString::number(mBrick.time() % 10000) +".txt");
+	mCollectedData = new QFile("routeBuilder_collected" + QString::number(mBrick.time() % 10000) + ".txt");
 	if (!mCollectedData->open(QFile::WriteOnly))
 	{
 		qDebug() << "Some problem with file opening!";
@@ -75,9 +76,5 @@ void RouteBuilder::readSensors()
 	if (mTrackingCounter % (1000 / trackingTimeout) == 0)
 	{
 		mCollectedData->flush();
-	}
-	if (mTrackingCounter * trackingTimeout == timeForTracking)
-	{
-		stop();
 	}
 }
