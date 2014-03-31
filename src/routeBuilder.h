@@ -34,7 +34,7 @@ protected:
 		, repeatRoute
 	};
 
-	unsigned int const trackingTimeout = 1000; // msec
+	unsigned int const trackingTimeout = 800; // msec
 
 	QFile *mCollectedData;
 	Brick mBrick;

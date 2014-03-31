@@ -6,6 +6,7 @@ RouteBuilder::RouteBuilder(QThread *mainThread)
 	, mWorkMode(sleep)
 	, mTrackingCounter(0)
 {
+	qDebug() << "--constructing RouteBuilder...";
 }
 
 QStringList RouteBuilder::motorList()
@@ -31,12 +32,14 @@ void RouteBuilder::startTracking()
 
 void RouteBuilder::stop()
 {
+	qDebug() << "--stop signal...";
 	mTracker.stop();
 
 	if (mCollectedData->isOpen())
 	{
 		mCollectedData->close();
 	}
+
 
 	switch (mWorkMode)
 	{
@@ -47,10 +50,12 @@ void RouteBuilder::stop()
 	case repeatRoute:
 		break;
 	}
+	qDebug() << "--end of tracking task";
 }
 
 void RouteBuilder::init()
 {
+	qDebug() << "--initialization...";
 	switch (mWorkMode)
 	{
 	case sleep: break;
@@ -63,6 +68,7 @@ void RouteBuilder::init()
 
 void RouteBuilder::initTracker()
 {
+	qDebug() << "--Tracker initialization...";
 	mCollectedData = new QFile("routeBuilder_collected" + QString::number(mBrick.time() % 10000) + ".txt");
 	if (!mCollectedData->open(QFile::WriteOnly))
 	{
@@ -70,6 +76,7 @@ void RouteBuilder::initTracker()
 		return;
 	}
 
+	qDebug() << "--getting motor ports...";
 	mTrackingMotors << mBrick.motorPorts(Motor::powerMotor);
 
 	//mTrackingMotors << mBrick.sensorPorts(Sensor::digitalSensor);
