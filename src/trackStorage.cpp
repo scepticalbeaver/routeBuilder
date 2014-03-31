@@ -17,7 +17,7 @@ void TrackStorage::addValue(int const &value)
 		return;
 	}
 
-	mSensor1.last() = qMakePair(mSensor1.first(), mSensor1.last() + 1);
+	mSensor1.last() = qMakePair(mSensor1.last().first, mSensor1.last().second + 1);
 
 }
 
@@ -31,9 +31,11 @@ void TrackStorage::printToFile()
 	}
 
 	QString line("");
-	foreach (QPair<int,int> const &pair, mSensor1)
+	QPair<int, int> current;
+	for(int i = 0; i < mSensor1.count(); i++)
 	{
-		line = QString::number(pair.first) + "\t\t" + QString::number(pair.second) + "\n";
+		current = mSensor1.at(i);
+		line = QString::number(current.first) + "\t\t" + QString::number(current.second) + "\n";
 		output.write(line.toUtf8());
 	}
 
