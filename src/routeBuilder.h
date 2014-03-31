@@ -17,6 +17,11 @@ class RouteBuilder : public QObject
 public:
 	explicit RouteBuilder(QThread *mainThread);
 
+	QStringList motorList();
+	QStringList digitalList();
+	float readSomeSensor();
+
+
 public slots:
 	void startTracking();
 	void stop();
@@ -29,7 +34,7 @@ protected:
 		, repeatRoute
 	};
 
-	unsigned int const trackingTimeout = 50; // msec
+	unsigned int const trackingTimeout = 1000; // msec
 
 	QFile *mCollectedData;
 	Brick mBrick;
