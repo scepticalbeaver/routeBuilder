@@ -30,7 +30,8 @@ void InteractiveCommander::initConnections()
 {
 	connect(this, SIGNAL(trackingRequested()), mRouteController, SLOT(startTracking()), Qt::QueuedConnection);
 	connect(this, SIGNAL(stopTrackingRequested()), mRouteController, SLOT(stopTracking()), Qt::QueuedConnection);
-	connect(this, SIGNAL(turnMotorsRequested(bool)), mRouteController, SLOT(switchMotors(bool)));
+	connect(this, SIGNAL(turnMotorsRequested(bool)), mRouteController, SLOT(switchMotors(bool)), Qt::QueuedConnection);
+	connect(this, SIGNAL(initDevicesRequest()), mRouteController, SLOT(initDevices()), Qt::QueuedConnection);
 }
 
 void InteractiveCommander::loopRound()
@@ -43,18 +44,21 @@ void InteractiveCommander::loopRound()
 	switch (decision)
 	{
 	case 1:
-		launchTracking();
+		initDevicesSignal();
 		break;
 	case 2:
-		completeTracking();
+		launchTracking();
 		break;
 	case 3:
-		startPlayback();
+		completeTracking();
 		break;
 	case 4:
-		switchMotors(true);
+		startPlayback();
 		break;
 	case 5:
+		switchMotors(true);
+		break;
+	case 6:
 		switchMotors(false);
 		break;
 	case 0:
@@ -66,12 +70,19 @@ void InteractiveCommander::loopRound()
 void InteractiveCommander::printRoundMsg()
 {
 	cout << endl << endl << "Type:\n"
-			<< "1) start tracking\n"
-			<< "2) stop tracking\n"
-			<< "3) repeat track\n"
-			<< "4) turn on motors\n"
-			<< "5) stop motors\n"
+			<< "1) init devices (do it first!)\n"
+			<< "2) start tracking\n"
+			<< "3) stop tracking\n"
+			<< "4) repeat track\n"
+			<< "5) turn on motors\n"
+			<< "6) stop motors\n"
 			<< "0) exit program\n> ";
+}
+
+void InteractiveCommander::initDevicesSignal()
+{
+	emit initDevicesRequest();
+	cout << endl << "Devices initialization..." << endl;
 }
 
 void InteractiveCommander::launchTracking()

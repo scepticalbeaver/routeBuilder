@@ -1,43 +1,58 @@
 #include "trackStorage.h"
 
-TrackStorage::TrackStorage()
+TrackStorage::TrackStorage(QList<MotorComplect> *list, QObject *parent)
+	: QObject(parent)
+	, mDevices(list)
 {
+	initConnections();
 }
 
 TrackStorage::~TrackStorage()
 {
-	mSensor1.clear();
-}
-
-void TrackStorage::addValue(float const &value)
-{
-	if (mSensor1.count() == 0 || qAbs(mSensor1.last().first - value) > epsilon)
-	{
-		mSensor1.append(qMakePair(value, 0));
-		return;
-	}
-
-	mSensor1.last() = qMakePair(mSensor1.last().first, mSensor1.last().second + 1);
 
 }
 
-void TrackStorage::printToFile()
+void TrackStorage::addValue(QVector<float> &data, float const &value)
 {
-	QFile output("routeBuilder_filteredData.txt");
-	if (!output.open(QFile::WriteOnly))
+	data.append(value);
+}
+
+void TrackStorage::stopRecording()
+{
+	mWatcher.stop();
+}
+
+bool TrackStorage::startRecording()
+{
+	if (mDevices == nullptr || mDevices->count() = 0)
 	{
-		qDebug() << "Problem with writting filtered data to file";
-		return;
+		return false;
 	}
 
-	QString line("");
-	QPair<float, int> current;
-	for(int i = 0; i < mSensor1.count(); i++)
-	{
-		current = mSensor1.at(i);
-		line = QString::number(current.first) + "\t\t" + QString::number(current.second) + "\n";
-		output.write(line.toUtf8());
-	}
+	mWatcher.start(timeout);
 
-	output.close();
+	return true;
+}
+
+QMap<int, QVector>* TrackStorage::routeData()
+{
+	return &mRouteData;
+}
+
+QVector<MotorComplect> *TrackStorage::devices()
+{
+	return mDevices;
+}
+
+void TrackStorage::initConnections()
+{
+	connect(&mWatcher, SIGNAL(timeout()), SLOT(readEncoders()));
+}
+
+void TrackStorage::readEncoders()
+{
+	for(int i = 0; i < mDevices->count(); i++)
+	{
+		addValue(mRouteData.value(i, QVector<float>()), mDevices->at(i).readEncoder());
+	}
 }

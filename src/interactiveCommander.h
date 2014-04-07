@@ -17,8 +17,8 @@ public:
 signals:
 	void trackingRequested();
 	void stopTrackingRequested();
-	void playbackRequested();
 	void turnMotorsRequested(bool);
+	void initDevicesRequest();
 
 public slots:
 	void start();
@@ -31,6 +31,7 @@ protected:
 	void initConnections();
 	void loopRound();
 	void printRoundMsg();
+	void initDevicesSignal();
 	void launchTracking();
 	void completeTracking();
 	void startPlayback();

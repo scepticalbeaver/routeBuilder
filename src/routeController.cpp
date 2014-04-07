@@ -3,108 +3,78 @@
 using namespace trikControl;
 
 RouteController::RouteController(QThread *guiThread)
-	: mCollectedData(nullptr)
-	, mBrick(*guiThread, "./")
-	, mWorkMode(sleep)
-	, mTrackingCounter(0)
+	: mBrick(*guiThread, "./")
 {
-	qDebug() << "--constructing RouteBuilder...";
-	qDebug() << "voltage: \t" << mBrick.battery()->readVoltage();
-
+	mMotorsComplect = new QVector<MotorComplect>;
+	mStorage = new TrackStorage(mMotorsComplect, this);
+	mRouteRepeater = new RouteRepeater(mStorage, this);
 }
 
-QStringList RouteController::motorList()
+RouteController::~RouteController()
 {
-	foreach (QString motorPort, mBrick.motorPorts(Motor::powerMotor))
-	{
-		Motor *someEnc = mBrick.motor(motorPort);
-		if (someEnc != nullptr)
-		{
-			qDebug() << "--Works: " << motorPort;
-		}
-		else
-		{
-			qDebug() << "-- null pointer on: " << motorPort;
-		}
-	}
-	return mBrick.motorPorts(Motor::powerMotor);
+	delete mMotorsComplect;
 }
 
-float RouteController::readSomeSensor()
+QList<Motor *> RouteController::motorList()
 {
-	QStringList encoders;
-	encoders << "JB1" << "JB2" << "JB3" << "JB4";
+	QList<Motor *> result;
 
-	float result = -1;
-
-	foreach (QString encoderPort, encoders)
+	foreach(QString &port, mBrick.motorPorts(Motor::powerMotor))
 	{
-		Encoder *someEnc = mBrick.encoder(encoderPort);
-		if (someEnc == nullptr)
+		Motor *motor = mBrick.motor(port);
+		if (motor != nullptr)
 		{
-			qDebug() << "--null pointer at\t" << encoderPort;
-			continue;
+			result << motor;
 		}
-
-		qDebug() << encoderPort << " -> \t" << someEnc->read();
-
-		result = someEnc->read();
 	}
-
 
 	return result;
 }
 
+QList<Encoder *> RouteController::encoderList()
+{
+	QList<Encoder *> result;
+	QStringList encoders;
+	encoders << "JB1" << "JB2" << "JB3" << "JB4";
+
+	foreach (QString &ePort, encoders)
+	{
+		Encoder *encoder = mBrick.encoder(ePort);
+		if (encoder != nullptr)
+		{
+			result << encoder;
+		}
+	}
+	return result;
+}
+
+void RouteController::sleep(unsigned int const &msec)
+{
+	QEventLoop loop;
+	QTimer::singleShot(msec, &loop, SLOT(quit()));
+	loop.exec();
+}
+
 void RouteController::switchPowerMotors(int const power)
 {
-	qDebug() << "-- try set power on each motor";
-
-	foreach (QString const motorPort, mBrick.motorPorts(Motor::powerMotor))
+	foreach(Motor *motor, motorList())
 	{
-		Motor *someMotor = mBrick.motor(motorPort);
-		if (someMotor == nullptr)
-		{
-			qDebug() << "--motor is NULL";
-			return;
-		}
-		qDebug() << "--got pointer";
-		someMotor->setPower(power);
-		qDebug() << "cur power on\t" << motorPort << "is \t" << someMotor->power();
+		motor->setPower(power);
 	}
-
 }
 
 
 void RouteController::startTracking()
 {
-	mWorkMode = trackRoute;
-	init();
+	if (!mStorage.startRecording())
+	{
+		qDebug() << "init devices first!";
+	}
 }
 
 void RouteController::stopTracking()
 {
-	qDebug() << "--stop signal...";
-	mTracker.stop();
-
-	if (mCollectedData->isOpen())
-	{
-		mCollectedData->close();
-	}
-
-
-	switch (mWorkMode)
-	{
-	case sleep: break;
-	case trackRoute:
-		disconnect(this, SLOT(readSensors()));
-		mStorage.printToFile();
-		break;
-	case repeatRoute:
-		break;
-	}
-	qDebug() << "--end of tracking task";
-
-	switchPowerMotors(0);
+	mStorage->stopRecording();
 }
 
 void RouteController::playback()
@@ -112,76 +82,40 @@ void RouteController::playback()
 	mRouteRepeater.playback();
 }
 
-void RouteController::switchMotors(const bool willTurnOn)
+void RouteController::switchMotors(bool const willTurnOn)
 {
 	int const power = (willTurnOn)? 85 : 0;
 	switchPowerMotors(power);
 }
 
-
-void RouteController::init()
+void RouteController::initDevices()
 {
-
-}
-
-void RouteController::initTracker()
-{
-	qDebug() << "--Tracker initialization...";
-	mCollectedData = new QFile("routeBuilder_collected" + QString::number(mBrick.time() % 10000) + ".txt");
-	if (!mCollectedData->open(QFile::WriteOnly))
+	int const testPower = 50;
+	foreach (Motor *motor, motorList())
 	{
-		qDebug() << "--Some problem with file opening!";
-		return;
+		resetEncoders();
+		motor->setPower(testPower);
+		sleep(1000);
+		motor->setPower(0);
+
+		float max = 0;
+		Encoder *muchedEncoder = nullptr;
+		foreach(Encoder *encoder, encoderList())
+		{
+			if (qAbs(encoder->read()) > max)
+			{
+				max = qAbs(encoder->read());
+				muchedEncoder = encoder;
+			}
+		}
+		mMotorsComplect << MotorComplect(motor, muchedEncoder);
 	}
-
-	qDebug() << "--getting motor ports...";
-	mTrackingMotors << "JB2";
-
-	resetEncoders();
-
-	if (!mTrackingMotors.count())
-	{
-		qDebug() << "no ports";
-		return;
-	}
-
-	connect(&mTracker, SIGNAL(timeout()), SLOT(readSensors()));
-	mTracker.start(trackingTimeout);
 }
 
 void RouteController::resetEncoders()
 {
-	QStringList encoders;
-	encoders << "JB1" << "JB2" << "JB3" << "JB4";
-
-	float result = -1;
-
-	foreach (QString encoderPort, encoders)
+	foreach (Encoder *encoder, encoderList())
 	{
-		Encoder *someEnc = mBrick.encoder(encoderPort);
-		if (someEnc == nullptr)
-		{
-			continue;
-		}
-		someEnc->reset();
-	}
-}
-
-void RouteController::readSensors()
-{
-	QString line = "";
-
-	float currValue = mBrick.encoder("JB2")->read();
-
-	line = "JB2\t" + QString::number(currValue) + "\n";
-	mCollectedData->write(line.toUtf8());
-
-	mStorage.addValue(currValue);
-
-	mTrackingCounter++;
-	if (mTrackingCounter % (1000 / trackingTimeout) == 0)
-	{
-		mCollectedData->flush();
-		qDebug() << currValue;
+		encoder->reset();
 	}
 }

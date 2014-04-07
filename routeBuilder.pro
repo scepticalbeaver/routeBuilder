@@ -36,11 +36,13 @@ SOURCES += src/main.cpp \
     src/trackStorage.cpp \
     src/interactiveCommander.cpp \
     src/routeController.cpp \
-    src/routeRepeater.cpp
+    src/routeRepeater.cpp \
+    src/motorComplect.cpp
 
 HEADERS += \
     src/trackStorage.h \
     src/interactiveCommander.h \
     src/routeController.h \
-    src/routeRepeater.h
+    src/routeRepeater.h \
+    src/motorComplect.h
 

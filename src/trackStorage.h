@@ -1,23 +1,38 @@
 #pragma once
 
+#include <QtCore/QTimer>
 #include <QtCore/QVector>
 #include <QtCore/QPair>
 #include <QtCore/QFile>
 
-#include <QDebug>
+#include "motorComplect.h"
 
-class TrackStorage
+class TrackStorage : public QObject
 {
+	Q_OBJECT
 public:
-	TrackStorage();
+	explicit TrackStorage(QVector<MotorComplect> *list, QObject *parent);
 	~TrackStorage();
 
-	void addValue(float const &value);
-	void printToFile();
+	static int const timeout = 100;
+	static int const epsilon = 20;
+	bool startRecording();
+
+	QMap<int, QVector> *routeData();
+	QVector<MotorComplect> *devices();
+
+public slots:
+	void stopRecording();
 
 protected:
-	int const epsilon = 20;
+	QTimer mWatcher;
+	QMap<int, QVector<float>> mRouteData;
+	QVector<MotorComplect> *mDevices;
 
-	QVector<QPair<float,int> > mSensor1;
+	void initConnections();
+	void addValue(QVector<float> &data, float const &value);
+
+protected slots:
+	void readEncoders();
 };
 
