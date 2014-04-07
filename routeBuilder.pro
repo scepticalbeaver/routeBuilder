@@ -33,10 +33,14 @@ MOC_DIR = .moc
 RCC_DIR = .moc
 
 SOURCES += src/main.cpp \
-    src/routeBuilder.cpp \
-    src/trackStorage.cpp
+    src/trackStorage.cpp \
+    src/interactiveCommander.cpp \
+    src/routeController.cpp \
+    src/routeRepeater.cpp
 
 HEADERS += \
-    src/routeBuilder.h \
-    src/trackStorage.h
+    src/trackStorage.h \
+    src/interactiveCommander.h \
+    src/routeController.h \
+    src/routeRepeater.h
 

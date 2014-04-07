@@ -1,8 +1,10 @@
-#include "routeBuilder.h"
+#include "routeController.h"
 
-RouteBuilder::RouteBuilder(QThread *mainThread)
+using namespace trikControl;
+
+RouteController::RouteController(QThread *guiThread)
 	: mCollectedData(nullptr)
-	, mBrick(*mainThread, "./")
+	, mBrick(*guiThread, "./")
 	, mWorkMode(sleep)
 	, mTrackingCounter(0)
 {
@@ -11,7 +13,7 @@ RouteBuilder::RouteBuilder(QThread *mainThread)
 
 }
 
-QStringList RouteBuilder::motorList()
+QStringList RouteController::motorList()
 {
 	foreach (QString motorPort, mBrick.motorPorts(Motor::powerMotor))
 	{
@@ -28,7 +30,7 @@ QStringList RouteBuilder::motorList()
 	return mBrick.motorPorts(Motor::powerMotor);
 }
 
-float RouteBuilder::readSomeSensor()
+float RouteController::readSomeSensor()
 {
 	QStringList encoders;
 	encoders << "JB1" << "JB2" << "JB3" << "JB4";
@@ -53,7 +55,7 @@ float RouteBuilder::readSomeSensor()
 	return result;
 }
 
-void RouteBuilder::setPowerOnMotor(int const power)
+void RouteController::switchPowerMotors(int const power)
 {
 	qDebug() << "-- try set power on each motor";
 
@@ -73,13 +75,13 @@ void RouteBuilder::setPowerOnMotor(int const power)
 }
 
 
-void RouteBuilder::startTracking()
+void RouteController::startTracking()
 {
 	mWorkMode = trackRoute;
 	init();
 }
 
-void RouteBuilder::stop()
+void RouteController::stopTracking()
 {
 	qDebug() << "--stop signal...";
 	mTracker.stop();
@@ -102,23 +104,27 @@ void RouteBuilder::stop()
 	}
 	qDebug() << "--end of tracking task";
 
-	setPowerOnMotor(0);
+	switchPowerMotors(0);
 }
 
-void RouteBuilder::init()
+void RouteController::playback()
 {
-	qDebug() << "--initialization...";
-	switch (mWorkMode)
-	{
-	case sleep: break;
-	case trackRoute:
-		initTracker();
-		break;
-	case repeatRoute: break;
-	}
+	mRouteRepeater.playback();
 }
 
-void RouteBuilder::initTracker()
+void RouteController::switchMotors(const bool willTurnOn)
+{
+	int const power = (willTurnOn)? 85 : 0;
+	switchPowerMotors(power);
+}
+
+
+void RouteController::init()
+{
+
+}
+
+void RouteController::initTracker()
 {
 	qDebug() << "--Tracker initialization...";
 	mCollectedData = new QFile("routeBuilder_collected" + QString::number(mBrick.time() % 10000) + ".txt");
@@ -143,7 +149,7 @@ void RouteBuilder::initTracker()
 	mTracker.start(trackingTimeout);
 }
 
-void RouteBuilder::resetEncoders()
+void RouteController::resetEncoders()
 {
 	QStringList encoders;
 	encoders << "JB1" << "JB2" << "JB3" << "JB4";
@@ -161,7 +167,7 @@ void RouteBuilder::resetEncoders()
 	}
 }
 
-void RouteBuilder::readSensors()
+void RouteController::readSensors()
 {
 	QString line = "";
 

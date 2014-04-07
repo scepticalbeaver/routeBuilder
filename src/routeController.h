@@ -9,46 +9,42 @@
 
 #include "trikControl/brick.h"
 #include "trackStorage.h"
+#include "routeRepeater.h"
 
-using namespace trikControl;
-
-class RouteBuilder : public QObject
+class RouteController : public QObject
 {
 	Q_OBJECT
 public:
-	explicit RouteBuilder(QThread *mainThread);
+	explicit RouteController(QThread *guiThread);
 
 	QStringList motorList();
 	float readSomeSensor();
 
-	void setPowerOnMotor(int const power);
-
 
 public slots:
 	void startTracking();
-	void stop();
+	void stopTracking();
+	void playback();
+	void switchMotors(bool const willTurnOn);
+
 
 protected:
-	enum State
-	{
-		sleep
-		, trackRoute
-		, repeatRoute
-	};
-
 	unsigned int const trackingTimeout = 100; // msec
 
 	QFile *mCollectedData;
-	Brick mBrick;
+	trikControl::Brick mBrick;
 	QTimer mTracker;
 	TrackStorage mStorage;
+	RouteRepeater mRouteRepeater;
 	State mWorkMode;
 	QStringList mTrackingMotors;
 	unsigned int mTrackingCounter;
 
-	void init();
+	//! will recognize devices with their ports
+	void initDevices();
 	void initTracker();
 	void resetEncoders();
+	void switchPowerMotors(int const power);
 
 
 protected slots:
