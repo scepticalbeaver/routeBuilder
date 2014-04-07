@@ -1,5 +1,7 @@
 #include "motorComplect.h"
 
+using namespace trikControl;
+
 MotorComplect::MotorComplect(Motor *motor, Encoder *motorEncoder)
 	: mPower(0)
 	, mIncrement(10)
@@ -36,7 +38,7 @@ void MotorComplect::resetEncoder()
 	mEncoder->reset();
 }
 
-void MotorComplect::setMotorPower(int const &power)
+void MotorComplect::setMotorPower(int power)
 {
 	power = qMin(power, 100);
 	power = qMax(power, -100);

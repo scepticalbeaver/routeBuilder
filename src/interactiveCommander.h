@@ -11,7 +11,7 @@ class InteractiveCommander : public QObject
 {
 	Q_OBJECT
 public:
-	InteractiveCommander(QThread &guiThread, QObject *parent = 0);
+	InteractiveCommander(QThread *guiThread, QObject *parent = 0);
 	~InteractiveCommander();
 
 signals:
@@ -19,6 +19,7 @@ signals:
 	void stopTrackingRequested();
 	void turnMotorsRequested(bool);
 	void initDevicesRequest();
+	void playbackRequested();
 
 public slots:
 	void start();

@@ -1,18 +1,23 @@
 #include "trackStorage.h"
 
-TrackStorage::TrackStorage(QList<MotorComplect> *list, QObject *parent)
+using namespace Storage;
+
+TrackStorage::TrackStorage(QVector<MotorComplect *> *array, QObject *parent)
 	: QObject(parent)
-	, mDevices(list)
 {
+	foreach (MotorComplect *complect, *array)
+	{
+		mDevices << new DeviceExtension(complect);
+	}
+
 	initConnections();
 }
 
 TrackStorage::~TrackStorage()
 {
-
 }
 
-void TrackStorage::addValue(QVector<float> &data, float const &value)
+void TrackStorage::addValue(QVector<float> &data, float value)
 {
 	data.append(value);
 }
@@ -24,7 +29,7 @@ void TrackStorage::stopRecording()
 
 bool TrackStorage::startRecording()
 {
-	if (mDevices == nullptr || mDevices->count() = 0)
+	if (mDevices.size() == 0)
 	{
 		return false;
 	}
@@ -34,12 +39,7 @@ bool TrackStorage::startRecording()
 	return true;
 }
 
-QMap<int, QVector>* TrackStorage::routeData()
-{
-	return &mRouteData;
-}
-
-QVector<MotorComplect> *TrackStorage::devices()
+QList<DeviceExtension *> &TrackStorage::devices()
 {
 	return mDevices;
 }
@@ -51,8 +51,8 @@ void TrackStorage::initConnections()
 
 void TrackStorage::readEncoders()
 {
-	for(int i = 0; i < mDevices->count(); i++)
+	for(int i = 0; i < mDevices.count(); i++)
 	{
-		addValue(mRouteData.value(i, QVector<float>()), mDevices->at(i).readEncoder());
+		addValue(mDevices.at(i)->history, mDevices.at(i)->motor->readEncoder());
 	}
 }

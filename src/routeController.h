@@ -35,7 +35,7 @@ protected:
 	trikControl::Brick mBrick;
 	TrackStorage *mStorage;
 	RouteRepeater *mRouteRepeater;
-	QVector<MotorComplect> *mMotorsComplect;
+	QVector<MotorComplect *> *mMotorsComplect;
 
 	void resetEncoders();
 	void switchPowerMotors(int const power);

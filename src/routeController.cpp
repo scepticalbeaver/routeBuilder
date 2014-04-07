@@ -5,13 +5,18 @@ using namespace trikControl;
 RouteController::RouteController(QThread *guiThread)
 	: mBrick(*guiThread, "./")
 {
-	mMotorsComplect = new QVector<MotorComplect>;
+	mMotorsComplect = new QVector<MotorComplect *>;
 	mStorage = new TrackStorage(mMotorsComplect, this);
 	mRouteRepeater = new RouteRepeater(mStorage, this);
 }
 
 RouteController::~RouteController()
 {
+	foreach(MotorComplect *complect, *mMotorsComplect)
+	{
+		delete complect;
+	}
+
 	delete mMotorsComplect;
 }
 
@@ -19,7 +24,7 @@ QList<Motor *> RouteController::motorList()
 {
 	QList<Motor *> result;
 
-	foreach(QString &port, mBrick.motorPorts(Motor::powerMotor))
+	foreach(QString const &port, mBrick.motorPorts(Motor::powerMotor))
 	{
 		Motor *motor = mBrick.motor(port);
 		if (motor != nullptr)
@@ -37,7 +42,7 @@ QList<Encoder *> RouteController::encoderList()
 	QStringList encoders;
 	encoders << "JB1" << "JB2" << "JB3" << "JB4";
 
-	foreach (QString &ePort, encoders)
+	foreach (QString const &ePort, encoders)
 	{
 		Encoder *encoder = mBrick.encoder(ePort);
 		if (encoder != nullptr)
@@ -66,7 +71,7 @@ void RouteController::switchPowerMotors(int const power)
 
 void RouteController::startTracking()
 {
-	if (!mStorage.startRecording())
+	if (!mStorage->startRecording())
 	{
 		qDebug() << "init devices first!";
 	}
@@ -79,7 +84,7 @@ void RouteController::stopTracking()
 
 void RouteController::playback()
 {
-	mRouteRepeater.playback();
+	mRouteRepeater->playback();
 }
 
 void RouteController::switchMotors(bool const willTurnOn)
@@ -108,7 +113,7 @@ void RouteController::initDevices()
 				muchedEncoder = encoder;
 			}
 		}
-		mMotorsComplect << MotorComplect(motor, muchedEncoder);
+		mMotorsComplect->append(new MotorComplect(motor, muchedEncoder));
 	}
 }
 

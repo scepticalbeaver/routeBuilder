@@ -13,7 +13,7 @@ public:
 	float readEncoder();
 	void resetEncoder();
 
-	void setMotorPower(int const &power);
+	void setMotorPower(int power);
 	void setIncrement(int const &increment);
 	void increaseSpeed();
 	void decreaseSpeed();

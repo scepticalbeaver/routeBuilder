@@ -1,11 +1,12 @@
 #include "interactiveCommander.h"
 
+using std::cin;
 using std::cout;
 using std::endl;
 
-InteractiveCommander::InteractiveCommander(QThread &guiThread, QObject *parent)
+InteractiveCommander::InteractiveCommander(QThread *guiThread, QObject *parent)
 	: QObject(parent)
-	, mGuiThread(*guiThread)
+	, mGuiThread(guiThread)
 {
 	mRouteController = new RouteController(mGuiThread);
 	mAlternativeThread = new QThread(this);
@@ -32,6 +33,7 @@ void InteractiveCommander::initConnections()
 	connect(this, SIGNAL(stopTrackingRequested()), mRouteController, SLOT(stopTracking()), Qt::QueuedConnection);
 	connect(this, SIGNAL(turnMotorsRequested(bool)), mRouteController, SLOT(switchMotors(bool)), Qt::QueuedConnection);
 	connect(this, SIGNAL(initDevicesRequest()), mRouteController, SLOT(initDevices()), Qt::QueuedConnection);
+	connect(this, SIGNAL(playbackRequested()), mRouteController, SLOT(playback()));
 }
 
 void InteractiveCommander::loopRound()

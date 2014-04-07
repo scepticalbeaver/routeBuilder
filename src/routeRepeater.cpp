@@ -1,5 +1,7 @@
 #include "routeRepeater.h"
 
+using namespace Storage;
+
 RouteRepeater::RouteRepeater(TrackStorage *storage, QObject *parent)
 	: QObject(parent)
 	, mStorage(storage)
@@ -12,11 +14,12 @@ RouteRepeater::RouteRepeater(TrackStorage *storage, QObject *parent)
 
 void RouteRepeater::playback()
 {
-	mDevicesCount = mStorage->devices()->size();
-	mLastPeriod = mStorage->routeData()->value(mDevicesCount - 1).size();
-	foreach(MotorComplect &complect, mStorage->devices())
+	mDevicesCount = mStorage->devices().count();
+	mPeriod = 0;
+	mLastPeriod = mStorage->devices().last()->history.size();
+	for (int i = 0; i < mDevicesCount; i++)
 	{
-		complect.resetEncoder();
+		mStorage->devices().at(i)->motor->resetEncoder();
 	}
 
 	mTimer.start(mStorage->timeout);
@@ -27,24 +30,25 @@ void RouteRepeater::adjust()
 	if (mPeriod >= mLastPeriod)
 	{
 		mTimer.stop();
+		return;
 	}
 	float correctValue = 0;
 	float currentValue = 0;
 	for (int i = 0; i < mDevicesCount; i++)
 	{
-		correctValue = mStorage->routeData()->value(i).at(mPeriod++);
-		currentValue = mStorage->devices()->at(i).readEncoder();
+		correctValue = mStorage->devices().at(i)->history.at(mPeriod++);
+		currentValue = mStorage->devices().at(i)->motor->readEncoder();
 		if (qAbs(correctValue - currentValue) < mStorage->epsilon)
 		{
 			return;
 		}
 		if (currentValue < correctValue)
 		{
-			mStorage->devices()->at(i).increaseSpeed();
+			mStorage->devices().at(i)->motor->increaseSpeed();
 		}
 		else
 		{
-			mStorage->devices()->at(i).decreaseSpeed();
+			mStorage->devices().at(i)->motor->decreaseSpeed();
 		}
 	}
 }
