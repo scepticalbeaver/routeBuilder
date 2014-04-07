@@ -2,6 +2,8 @@
 
 #include "trikControl/brick.h"
 
+#include <QDebug>
+
 class MotorComplect
 {
 public:
@@ -15,6 +17,7 @@ public:
 
 	void setMotorPower(int power);
 	void setIncrement(int const &increment);
+	void setReversed(bool const &isReversed);
 	void increaseSpeed();
 	void decreaseSpeed();
 
@@ -23,5 +26,6 @@ protected:
 	trikControl::Encoder *mEncoder;
 	int mPower;
 	int mIncrement;
+	bool mIsReversed;
 };
 

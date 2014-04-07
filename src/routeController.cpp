@@ -8,10 +8,15 @@ RouteController::RouteController(QThread *guiThread)
 	mMotorsComplect = new QVector<MotorComplect *>;
 	mStorage = new TrackStorage(mMotorsComplect, this);
 	mRouteRepeater = new RouteRepeater(mStorage, this);
+
+	qDebug() << "-- gui thread " << guiThread;
 }
 
 RouteController::~RouteController()
 {
+//	delete mRouteRepeater;
+//	delete mStorage;
+
 	foreach(MotorComplect *complect, *mMotorsComplect)
 	{
 		delete complect;
@@ -40,7 +45,7 @@ QList<Encoder *> RouteController::encoderList()
 {
 	QList<Encoder *> result;
 	QStringList encoders;
-	encoders << "JB1" << "JB2" << "JB3" << "JB4";
+	encoders << "JB1" << "JB2" << "JB3" << "JB4" << "JM1" << "JM2" << "JM3" << "M1";
 
 	foreach (QString const &ePort, encoders)
 	{
@@ -71,31 +76,36 @@ void RouteController::switchPowerMotors(int const power)
 
 void RouteController::startTracking()
 {
-	if (!mStorage->startRecording())
-	{
-		qDebug() << "init devices first!";
-	}
+	resetEncoders();
+	mStorage->startRecording();
+	emit jobDone(true);
 }
 
 void RouteController::stopTracking()
 {
 	mStorage->stopRecording();
+	emit jobDone(true);
 }
 
 void RouteController::playback()
 {
+	qDebug() << "controller, try reset encoder";
+	resetEncoders();
 	mRouteRepeater->playback();
+	emit jobDone(true);
 }
 
 void RouteController::switchMotors(bool const willTurnOn)
 {
 	int const power = (willTurnOn)? 85 : 0;
 	switchPowerMotors(power);
+	emit jobDone(true);
 }
 
 void RouteController::initDevices()
 {
 	int const testPower = 50;
+	float const epsilon = 30;
 	foreach (Motor *motor, motorList())
 	{
 		resetEncoders();
@@ -104,17 +114,29 @@ void RouteController::initDevices()
 		motor->setPower(0);
 
 		float max = 0;
-		Encoder *muchedEncoder = nullptr;
+		Encoder *machedEncoder = nullptr;
 		foreach(Encoder *encoder, encoderList())
 		{
+			if (qAbs(encoder->read()) < epsilon)
+			{
+				continue;
+			}
 			if (qAbs(encoder->read()) > max)
 			{
 				max = qAbs(encoder->read());
-				muchedEncoder = encoder;
+				machedEncoder = encoder;
 			}
 		}
-		mMotorsComplect->append(new MotorComplect(motor, muchedEncoder));
+		if (machedEncoder != nullptr)
+		{
+			qDebug() << "(motor, encoder) = " << motor << " " << machedEncoder;
+			mMotorsComplect->append(new MotorComplect(motor, machedEncoder));
+			qDebug() << "reversed?" << machedEncoder->read();
+			mMotorsComplect->last()->setReversed(machedEncoder->read() < 0);
+		}
 	}
+	qDebug() << "motors founded: " << mMotorsComplect->size();
+	emit jobDone(true);
 }
 
 void RouteController::resetEncoders()

@@ -3,8 +3,11 @@
 using namespace trikControl;
 
 MotorComplect::MotorComplect(Motor *motor, Encoder *motorEncoder)
-	: mPower(0)
-	, mIncrement(10)
+	: mMotor(motor)
+	, mEncoder(motorEncoder)
+	, mPower(0)
+	, mIncrement(4)
+	, mIsReversed(false)
 {
 }
 
@@ -30,6 +33,10 @@ trikControl::Encoder* MotorComplect::encoder()
 
 float MotorComplect::readEncoder()
 {
+	if (mEncoder == nullptr)
+	{
+		qDebug() << "nullptr encoder requested";
+	}
 	return mEncoder->read();
 }
 
@@ -51,12 +58,17 @@ void MotorComplect::setIncrement(int const &increment)
 	mIncrement = increment;
 }
 
+void MotorComplect::setReversed(bool const &isReversed)
+{
+	mIsReversed = isReversed;
+}
+
 void MotorComplect::increaseSpeed()
 {
-	setMotorPower(mPower + mIncrement);
+	setMotorPower(mPower + ((mIsReversed)? mIncrement : -mIncrement));
 }
 
 void MotorComplect::decreaseSpeed()
 {
-	setMotorPower(mPower - mIncrement);
+	setMotorPower(mPower + ((mIsReversed)? -mIncrement : mIncrement));
 }

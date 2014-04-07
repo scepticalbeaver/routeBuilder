@@ -5,31 +5,52 @@ using namespace Storage;
 RouteRepeater::RouteRepeater(TrackStorage *storage, QObject *parent)
 	: QObject(parent)
 	, mStorage(storage)
+	, mTimer(nullptr)
 	, mDevicesCount(0)
 	, mPeriod(0)
 	, mLastPeriod(0)
 {
-	connect(&mTimer, SIGNAL(timeout()), SLOT(adjust()));
 }
 
 void RouteRepeater::playback()
 {
-	mDevicesCount = mStorage->devices().count();
+	initTimer();
+	qDebug() << "--starting playback";
+	mDevicesCount = mStorage->devices().size();
+
 	mPeriod = 0;
 	mLastPeriod = mStorage->devices().last()->history.size();
+
+	qDebug() << "--history count " << mLastPeriod;
+
+	mTimer->start(mStorage->timeout);
+}
+
+void RouteRepeater::initTimer()
+{
+	if (mTimer != nullptr)
+	{
+		return;
+	}
+	mTimer = new QTimer(this);
+	connect(mTimer, SIGNAL(timeout()), SLOT(adjust()));
+
+}
+
+void RouteRepeater::stopMotors()
+{
 	for (int i = 0; i < mDevicesCount; i++)
 	{
-		mStorage->devices().at(i)->motor->resetEncoder();
+		mStorage->devices().at(i)->motor->setMotorPower(0);
 	}
-
-	mTimer.start(mStorage->timeout);
 }
 
 void RouteRepeater::adjust()
 {
 	if (mPeriod >= mLastPeriod)
 	{
-		mTimer.stop();
+		mTimer->stop();
+		stopMotors();
 		return;
 	}
 	float correctValue = 0;
@@ -42,13 +63,14 @@ void RouteRepeater::adjust()
 		{
 			return;
 		}
+		qDebug() << "curr :: correct" << currentValue << " " << correctValue;
 		if (currentValue < correctValue)
 		{
-			mStorage->devices().at(i)->motor->increaseSpeed();
+			mStorage->devices().at(i)->motor->decreaseSpeed();
 		}
 		else
 		{
-			mStorage->devices().at(i)->motor->decreaseSpeed();
+			mStorage->devices().at(i)->motor->increaseSpeed();
 		}
 	}
 }

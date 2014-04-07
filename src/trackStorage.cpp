@@ -4,39 +4,36 @@ using namespace Storage;
 
 TrackStorage::TrackStorage(QVector<MotorComplect *> *array, QObject *parent)
 	: QObject(parent)
+	, mWatcher(nullptr)
+	, mPureComplects(array)
 {
-	foreach (MotorComplect *complect, *array)
-	{
-		mDevices << new DeviceExtension(complect);
-	}
-
-	initConnections();
+	initTImer();
 }
 
 TrackStorage::~TrackStorage()
 {
 }
 
-void TrackStorage::addValue(QVector<float> &data, float value)
-{
-	data.append(value);
-}
-
 void TrackStorage::stopRecording()
 {
-	mWatcher.stop();
+	mWatcher->stop();
+	qDebug() << "history size: " << mDevices.last()->history.size();
 }
 
-bool TrackStorage::startRecording()
+void TrackStorage::startRecording()
 {
+	initTImer();
+	qDebug() << "--storage, start recording in thread " << this->thread();
+	fetchDevices();
 	if (mDevices.size() == 0)
 	{
-		return false;
+		qDebug() << "--zero device count";
+		return;
 	}
+	clearHistory();
+	mWatcher->start(timeout);
 
-	mWatcher.start(timeout);
-
-	return true;
+	qDebug() << "--recording timer started";
 }
 
 QList<DeviceExtension *> &TrackStorage::devices()
@@ -44,15 +41,39 @@ QList<DeviceExtension *> &TrackStorage::devices()
 	return mDevices;
 }
 
-void TrackStorage::initConnections()
+void TrackStorage::initTImer()
 {
-	connect(&mWatcher, SIGNAL(timeout()), SLOT(readEncoders()));
+	if (mWatcher != nullptr)
+	{
+		return;
+	}
+	mWatcher = new QTimer(this);
+	connect(mWatcher, SIGNAL(timeout()), this, SLOT(readEncoders()));
 }
 
 void TrackStorage::readEncoders()
 {
+	//qDebug() << "reading encoders";
 	for(int i = 0; i < mDevices.count(); i++)
 	{
-		addValue(mDevices.at(i)->history, mDevices.at(i)->motor->readEncoder());
+		mDevices.at(i)->history.append(mDevices.at(i)->motor->readEncoder());
+		//qDebug() << "--encoder x" << i << " : " << mDevices.at(i)->motor->readEncoder();
+	}
+}
+
+void TrackStorage::fetchDevices()
+{
+	mDevices.clear();
+	for (int i = 0; i < mPureComplects->size(); i++)
+	{
+		mDevices << new DeviceExtension(mPureComplects->at(i));
+	}
+}
+
+void TrackStorage::clearHistory()
+{
+	for (int i = 0; i < mDevices.size(); i++)
+	{
+		mDevices.at(i)->history.clear();
 	}
 }

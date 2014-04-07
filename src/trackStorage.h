@@ -4,6 +4,9 @@
 #include <QtCore/QVector>
 #include <QtCore/QList>
 #include <QtCore/QFile>
+#include <QtCore/QEventLoop>
+
+#include <QDebug>
 
 #include "motorComplect.h"
 
@@ -25,24 +28,27 @@ class TrackStorage : public QObject
 {
 	Q_OBJECT
 public:
-	explicit TrackStorage(QVector<MotorComplect *> *list, QObject *parent);
+	explicit TrackStorage(QVector<MotorComplect *> *array, QObject *parent = 0);
 	~TrackStorage();
 
-	static int const timeout = 100;
-	static int const epsilon = 20;
-	bool startRecording();
+	static int const timeout = 20;
+	static int const epsilon = 10;
 
+	void loadDevices();
 	QList<Storage::DeviceExtension *> &devices();
 
 public slots:
+	void startRecording();
 	void stopRecording();
 
 protected:
-	QTimer mWatcher;
+	QTimer *mWatcher;
 	QList<Storage::DeviceExtension *> mDevices;
+	QVector<MotorComplect *> *mPureComplects;
 
-	void initConnections();
-	void addValue(QVector<float> &data, float value);
+	void initTImer();
+	void fetchDevices();
+	void clearHistory();
 
 protected slots:
 	void readEncoders();

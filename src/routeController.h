@@ -29,6 +29,9 @@ public slots:
 	void playback();
 	void switchMotors(bool const willTurnOn);
 
+signals:
+	void jobDone(bool);
+
 protected:
 	unsigned int const trackingTimeout = 100; // msec
 

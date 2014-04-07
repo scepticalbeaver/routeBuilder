@@ -14,15 +14,15 @@ public:
 	InteractiveCommander(QThread *guiThread, QObject *parent = 0);
 	~InteractiveCommander();
 
+public slots:
+	void start();
+
 signals:
 	void trackingRequested();
 	void stopTrackingRequested();
 	void turnMotorsRequested(bool);
 	void initDevicesRequest();
 	void playbackRequested();
-
-public slots:
-	void start();
 
 protected:
 	QThread *mGuiThread;

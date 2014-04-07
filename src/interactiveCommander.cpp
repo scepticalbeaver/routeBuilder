@@ -12,6 +12,7 @@ InteractiveCommander::InteractiveCommander(QThread *guiThread, QObject *parent)
 	mAlternativeThread = new QThread(this);
 	mRouteController->moveToThread(mAlternativeThread);
 	mAlternativeThread->start();
+	initConnections();
 }
 
 InteractiveCommander::~InteractiveCommander()
@@ -33,7 +34,8 @@ void InteractiveCommander::initConnections()
 	connect(this, SIGNAL(stopTrackingRequested()), mRouteController, SLOT(stopTracking()), Qt::QueuedConnection);
 	connect(this, SIGNAL(turnMotorsRequested(bool)), mRouteController, SLOT(switchMotors(bool)), Qt::QueuedConnection);
 	connect(this, SIGNAL(initDevicesRequest()), mRouteController, SLOT(initDevices()), Qt::QueuedConnection);
-	connect(this, SIGNAL(playbackRequested()), mRouteController, SLOT(playback()));
+	connect(this, SIGNAL(playbackRequested()), mRouteController, SLOT(playback()), Qt::QueuedConnection);
+	connect(mRouteController, SIGNAL(jobDone(bool)), SLOT(routeActionFinished(bool)));
 }
 
 void InteractiveCommander::loopRound()
@@ -64,7 +66,8 @@ void InteractiveCommander::loopRound()
 		switchMotors(false);
 		break;
 	case 0:
-		mGuiThread->terminate();
+		mAlternativeThread->quit();
+		mGuiThread->quit();
 		break;
 	}
 }
@@ -107,7 +110,7 @@ void InteractiveCommander::startPlayback()
 
 void InteractiveCommander::switchMotors(bool const willTurnOn)
 {
-	emit switchMotors(willTurnOn);
+	emit turnMotorsRequested(willTurnOn);
 	cout << endl << "Sending message to motors..." << endl;
 }
 
