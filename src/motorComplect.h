@@ -1,11 +1,13 @@
 #pragma once
 
-#include "trikControl/brick.h"
-
+#include <QVector>
 #include <QDebug>
 
-class MotorComplect
+#include "trikControl/brick.h"
+
+class MotorComplect : public QObject
 {
+	Q_OBJECT
 public:
 	MotorComplect(trikControl::Motor *motor, trikControl::Encoder *motorEncoder);
 	void setMotor(trikControl::Motor *motor);
@@ -14,6 +16,7 @@ public:
 	trikControl::Encoder* encoder();
 	float readEncoder();
 	void resetEncoder();
+	void clearHistory();
 
 	void setMotorPower(int power);
 	void setIncrement(int const &increment);
@@ -21,11 +24,26 @@ public:
 	void increaseSpeed();
 	void decreaseSpeed();
 
+public slots:
+	void updateHistory();
+	void startPlayback();
+	void adjustSpeed();
+
+signals:
+	void playbackDone();
+
 protected:
+	static int const epsilon = 2;
+	static int const forecastRange = 2;
 	trikControl::Motor *mMotor;
 	trikControl::Encoder *mEncoder;
 	int mPower;
 	int mIncrement;
 	bool mIsReversed;
+	float mLatestEncoderVal;
+	int mHistoryPointer;
+	QVector<float> mHistory;
+
+	float forecastNextValue();
 };
 

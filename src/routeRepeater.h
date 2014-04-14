@@ -14,15 +14,14 @@ public:
 
 protected:
 	TrackStorage *mStorage;
+	QVector<MotorComplect *> *mDevices;
 	QTimer *mTimer;
 	int mDevicesCount;
-	int mPeriod;
-	int mLastPeriod;
 
 	void initTimer();
 	void stopMotors();
 
 protected slots:
-	void adjust();
+	void adjustMotors();
 };
 

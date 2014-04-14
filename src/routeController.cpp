@@ -104,13 +104,13 @@ void RouteController::switchMotors(bool const willTurnOn)
 
 void RouteController::initDevices()
 {
-	int const testPower = 50;
+	int const testPower = 60;
 	float const epsilon = 30;
 	foreach (Motor *motor, motorList())
 	{
 		resetEncoders();
 		motor->setPower(testPower);
-		sleep(1000);
+		sleep(500);
 		motor->setPower(0);
 
 		float max = 0;
