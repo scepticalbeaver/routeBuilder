@@ -2,11 +2,12 @@
 
 using namespace trikControl;
 
-MotorComplect::MotorComplect(Motor *motor, Encoder *motorEncoder)
+MotorComplect::MotorComplect(Motor *motor, Encoder *motorEncoder, int const &complectID)
 	: mMotor(motor)
 	, mEncoder(motorEncoder)
 	, mPower(0)
 	, mIncrement(4)
+	, mID(complectID)
 	, mIsReversed(false)
 	, mLatestEncoderVal(0)
 	, mHistoryPointer(0)
@@ -50,7 +51,8 @@ void MotorComplect::resetEncoder()
 
 void MotorComplect::clearHistory()
 {
-	mHistory.clear();
+	mDiffHistory.clear();
+	mPureHistory.clear();
 	mHistoryPointer = 0;
 }
 
@@ -85,8 +87,14 @@ void MotorComplect::decreaseSpeed()
 void MotorComplect::updateHistory()
 {
 	float const current = mEncoder->read();
-	mHistory.append(mLatestEncoderVal - current);
+	mDiffHistory.append(mLatestEncoderVal - current);
 	mLatestEncoderVal = current;
+	mPureHistory.append(current);
+}
+
+void MotorComplect::completeHistory()
+{
+	saveHistoryToFile("record");
 }
 
 void MotorComplect::startPlayback()
@@ -94,8 +102,13 @@ void MotorComplect::startPlayback()
 	mHistoryPointer = 0;
 	for (int i = 0; i < forecastRange + 1; i++)
 	{
-		mHistory.append(0);
+		mDiffHistory.append(0);
 	}
+}
+
+void MotorComplect::completePlayback()
+{
+	saveHistoryToFile("playback");
 }
 
 void MotorComplect::adjustSpeed()
@@ -104,6 +117,10 @@ void MotorComplect::adjustSpeed()
 	float const diff = current - mLatestEncoderVal;
 	mLatestEncoderVal = current;
 	float const nextDiff = forecastNextValue();
+
+	//rewriting history
+	mPureHistory.at(mHistoryPointer) = current;
+	mDiffHistory.at(mHistoryPointer) = diff;
 
 	//qDebug() << "curr :: correct" << currentValue << " " << correctValue;
 	if (qAbs(diff - nextDiff) < epsilon)
@@ -123,11 +140,11 @@ void MotorComplect::adjustSpeed()
 
 float MotorComplect::forecastNextValue()
 {
-	int const histrorySize = mHistory.size();
+	int const histrorySize = mDiffHistory.size();
 	if (mHistoryPointer >= histrorySize)
 	{
 		emit playbackDone();
-		return mHistory.last();
+		return mDiffHistory.last();
 	}
 
 	while (mHistoryPointer >= histrorySize - lookForwardDistance)
@@ -139,9 +156,32 @@ float MotorComplect::forecastNextValue()
 	int totalWeight = 0;
 	for (int i = 0; i < lookForwardDistance; i++)
 	{
-		result += mHistory.at(mHistoryPointer + i) * (i + 1);
+		result += mDiffHistory.at(mHistoryPointer + i) * (i + 1);
 		totalWeight += i + 1;
 	}
 	mHistoryPointer++;
 	return result / totalWeight;
+}
+
+void MotorComplect::saveHistoryToFile(QString &comment)
+{
+	QString filename = "motorComplect_" + QString::number(mID) + "--"
+			+ comment
+			+ QTime::currentTime().toString("hh-mm-ss-zzz") + ".txt";
+	QFile file(filename);
+	if (!file.open(QFile::WriteOnly))
+	{
+		qDebug() << "could not create file";
+		return;
+	}
+	file.write(QString("pure data:\n").toUtf8());
+	QString line("");
+	for (int i = 0; i < mPureHistory.size(); i++)
+	{
+		line = QString::number(mPureHistory.at(i), 'f', 2) + " \t"
+				+ QString::number(mDiffHistory.at(i), 'f', 2) + "\n";
+		file->write(line.toUtf8());
+	}
+	file.flush();
+	file.close();
 }

@@ -17,7 +17,12 @@ TrackStorage::~TrackStorage()
 void TrackStorage::stopRecording()
 {
 	mWatcher->stop();
+
 //	qDebug() << "history size: " << mDevices.last()->history.size();
+	for(int i = 0; i < mMotorComplects->size(); i++)
+	{
+		mMotorComplects->at(i)->completeHistory();
+	}
 }
 
 void TrackStorage::startRecording()
@@ -30,6 +35,7 @@ void TrackStorage::startRecording()
 		return;
 	}
 	clearHistory();
+
 	mWatcher->start(timeout);
 }
 
@@ -50,7 +56,7 @@ void TrackStorage::initTimer()
 
 void TrackStorage::readEncoders()
 {
-	for(int i = 0; i < mDevices.count(); i++)
+	for(int i = 0; i < mMotorComplects->size(); i++)
 	{
 		mMotorComplects->at(i)->updateHistory();
 	}

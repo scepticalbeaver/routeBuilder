@@ -130,7 +130,7 @@ void RouteController::initDevices()
 		if (machedEncoder != nullptr)
 		{
 			qDebug() << "(motor, encoder) = " << motor << " " << machedEncoder;
-			mMotorsComplect->append(new MotorComplect(motor, machedEncoder));
+			mMotorsComplect->append(new MotorComplect(motor, machedEncoder, mMotorsComplect->size()));
 			qDebug() << "reversed?" << machedEncoder->read();
 			mMotorsComplect->last()->setReversed(machedEncoder->read() < 0);
 		}

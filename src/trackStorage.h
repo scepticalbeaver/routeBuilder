@@ -3,7 +3,6 @@
 #include <QtCore/QTimer>
 #include <QtCore/QVector>
 #include <QtCore/QList>
-#include <QtCore/QFile>
 
 #include <QDebug>
 
@@ -26,7 +25,6 @@ public slots:
 
 protected:
 	QTimer *mWatcher;
-	QList<Storage::DeviceExtension *> mDevices;
 	QVector<MotorComplect *> *mMotorComplects;
 
 	void initTimer();

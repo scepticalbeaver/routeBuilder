@@ -23,5 +23,6 @@ protected:
 
 protected slots:
 	void adjustMotors();
+	void playbackStopped();
 };
 

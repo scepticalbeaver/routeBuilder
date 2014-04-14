@@ -9,6 +9,10 @@ RouteRepeater::RouteRepeater(TrackStorage *storage, QObject *parent)
 	, mTimer(nullptr)
 	, mDevicesCount(0)
 {
+	for (int i = 0; i < mDevices->size(); i++)
+	{
+		connect(mDevices->at(i), SIGNAL(playbackDone()), SLOT(playbackStopped()));
+	}
 }
 
 void RouteRepeater::playback()
@@ -43,5 +47,14 @@ void RouteRepeater::adjustMotors()
 	for (int i = 0; i < mDevices->size(); i++)
 	{
 		mDevices->at(i)->adjustSpeed();
+	}
+}
+
+void RouteRepeater::playbackStopped()
+{
+	mTimer->stop();
+	for (int i = 0; i < mDevices->size(); i++)
+	{
+		mDevices->at(i)->completePlayback();
 	}
 }
