@@ -1,7 +1,5 @@
 #include "routeRepeater.h"
 
-using namespace Storage;
-
 RouteRepeater::RouteRepeater(TrackStorage *storage, QObject *parent)
 	: QObject(parent)
 	, mStorage(storage)
@@ -9,16 +7,25 @@ RouteRepeater::RouteRepeater(TrackStorage *storage, QObject *parent)
 	, mTimer(nullptr)
 	, mDevicesCount(0)
 {
-	for (int i = 0; i < mDevices->size(); i++)
-	{
-		connect(mDevices->at(i), SIGNAL(playbackDone()), SLOT(playbackStopped()));
-	}
+}
+
+RouteRepeater::~RouteRepeater()
+{
+	stopMotors();
 }
 
 void RouteRepeater::playback()
 {
+	for (int i = 0; i < mDevices->size(); i++)
+	{
+		connect(mDevices->at(i), SIGNAL(playbackDone()), SLOT(playbackStopped()), Qt::UniqueConnection);
+	}
 	initTimer();
 	qDebug() << "--starting playback";
+	for (int i = 0; i < mDevicesCount; i++)
+	{
+		mDevices->at(i)->startPlayback();
+	}
 
 	mTimer->start(mStorage->timeout);
 }
@@ -52,9 +59,16 @@ void RouteRepeater::adjustMotors()
 
 void RouteRepeater::playbackStopped()
 {
+	if (!mTimer->isActive())
+	{
+		return;
+	}
+	qDebug() << "--playback stopped signal received";
 	mTimer->stop();
 	for (int i = 0; i < mDevices->size(); i++)
 	{
 		mDevices->at(i)->completePlayback();
 	}
+	stopMotors();
+	emit playbackDone();
 }

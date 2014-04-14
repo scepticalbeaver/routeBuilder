@@ -8,6 +8,7 @@ RouteController::RouteController(QThread *guiThread)
 	mMotorsComplect = new QVector<MotorComplect *>;
 	mStorage = new TrackStorage(mMotorsComplect, this);
 	mRouteRepeater = new RouteRepeater(mStorage, this);
+	connect(mRouteRepeater, SIGNAL(playbackDone()), SLOT(playbackStopped()));
 
 	qDebug() << "-- gui thread " << guiThread;
 }
@@ -29,14 +30,17 @@ QList<Motor *> RouteController::motorList()
 {
 	QList<Motor *> result;
 
+	//qDebug() << "-- //<  all motor ports:";
 	foreach(QString const &port, mBrick.motorPorts(Motor::powerMotor))
 	{
 		Motor *motor = mBrick.motor(port);
 		if (motor != nullptr)
 		{
 			result << motor;
+			//qDebug() << "-- motor at port: " << port << "motor: " << motor;
 		}
 	}
+	//qDebug() << "-- /ports>";
 
 	return result;
 }
@@ -53,6 +57,7 @@ QList<Encoder *> RouteController::encoderList()
 		if (encoder != nullptr)
 		{
 			result << encoder;
+			//qDebug() << "encoder at" << ePort << ", encoder: " << encoder;
 		}
 	}
 	return result;
@@ -63,6 +68,11 @@ void RouteController::sleep(unsigned int const &msec)
 	QEventLoop loop;
 	QTimer::singleShot(msec, &loop, SLOT(quit()));
 	loop.exec();
+}
+
+void RouteController::playbackStopped()
+{
+	emit jobDone(true);
 }
 
 void RouteController::switchPowerMotors(int const power)
@@ -92,7 +102,6 @@ void RouteController::playback()
 	qDebug() << "controller, try reset encoder";
 	resetEncoders();
 	mRouteRepeater->playback();
-	emit jobDone(true);
 }
 
 void RouteController::switchMotors(bool const willTurnOn)
@@ -105,7 +114,7 @@ void RouteController::switchMotors(bool const willTurnOn)
 void RouteController::initDevices()
 {
 	int const testPower = 60;
-	float const epsilon = 30;
+	float const epsilon = 10;
 	foreach (Motor *motor, motorList())
 	{
 		resetEncoders();

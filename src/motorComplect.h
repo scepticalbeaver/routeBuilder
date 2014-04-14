@@ -1,9 +1,11 @@
 #pragma once
 
 #include <QVector>
-#include <QDebug>
+#include <QString>
 #include <QFile>
 #include <QTime>
+
+#include <QDebug>
 
 #include "trikControl/brick.h"
 
@@ -37,20 +39,22 @@ signals:
 	void playbackDone();
 
 protected:
-	static int const epsilon = 2;
-	static int const forecastRange = 2;
+	static int const epsilon = 0.3;
+	static int const forecastRange = 3;
 	trikControl::Motor *mMotor;
 	trikControl::Encoder *mEncoder;
 	int mPower;
 	int mIncrement;
 	int const mID;
 	bool mIsReversed;
+	bool mIsMotorBlocked;
 	float mLatestEncoderVal;
 	int mHistoryPointer;
 	QVector<float> mDiffHistory;
 	QVector<float> mPureHistory;
+	int auxTime;
 
 	float forecastNextValue();
-	void saveHistoryToFile(QString &comment = QString(""));
+	void saveHistoryToFile(QString comment = QString(""));
 };
 

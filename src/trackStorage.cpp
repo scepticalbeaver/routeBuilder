@@ -1,7 +1,5 @@
 #include "trackStorage.h"
 
-using namespace Storage;
-
 TrackStorage::TrackStorage(QVector<MotorComplect *> *array, QObject *parent)
 	: QObject(parent)
 	, mWatcher(nullptr)
@@ -29,7 +27,7 @@ void TrackStorage::startRecording()
 {
 	initTimer();
 
-	if (mMotorComplects.size() == 0)
+	if (mMotorComplects->size() == 0)
 	{
 		qDebug() << "--no tracking device found";
 		return;

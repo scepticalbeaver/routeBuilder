@@ -15,7 +15,7 @@ public:
 	explicit TrackStorage(QVector<MotorComplect *> *array, QObject *parent = 0);
 	~TrackStorage();
 
-	static int const timeout = 20;
+	static int const timeout = 6;
 
 	QVector<MotorComplect *> *devices();
 

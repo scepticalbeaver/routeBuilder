@@ -6,11 +6,13 @@ MotorComplect::MotorComplect(Motor *motor, Encoder *motorEncoder, int const &com
 	: mMotor(motor)
 	, mEncoder(motorEncoder)
 	, mPower(0)
-	, mIncrement(4)
+	, mIncrement(1)
 	, mID(complectID)
 	, mIsReversed(false)
+	, mIsMotorBlocked(false)
 	, mLatestEncoderVal(0)
 	, mHistoryPointer(0)
+	, auxTime(25)
 {
 }
 
@@ -58,6 +60,10 @@ void MotorComplect::clearHistory()
 
 void MotorComplect::setMotorPower(int power)
 {
+	if (mIsMotorBlocked)
+	{
+		return;
+	}
 	power = qMin(power, 100);
 	power = qMax(power, -100);
 	mMotor->setPower(power);
@@ -76,30 +82,32 @@ void MotorComplect::setReversed(bool const &isReversed)
 
 void MotorComplect::increaseSpeed()
 {
-	setMotorPower(mPower + ((mIsReversed)? mIncrement : -mIncrement));
+	setMotorPower(mPower + ((mIsReversed)? -mIncrement : mIncrement));
 }
 
 void MotorComplect::decreaseSpeed()
 {
-	setMotorPower(mPower + ((mIsReversed)? -mIncrement : mIncrement));
+	setMotorPower(mPower + ((mIsReversed)? mIncrement : -mIncrement));
 }
 
 void MotorComplect::updateHistory()
 {
 	float const current = mEncoder->read();
-	mDiffHistory.append(mLatestEncoderVal - current);
+	mDiffHistory.append(current - mLatestEncoderVal);
 	mLatestEncoderVal = current;
 	mPureHistory.append(current);
 }
 
 void MotorComplect::completeHistory()
 {
-	saveHistoryToFile("record");
+	saveHistoryToFile(QString("record"));
 }
 
 void MotorComplect::startPlayback()
 {
 	mHistoryPointer = 0;
+	mEncoder->reset();
+	mLatestEncoderVal = 0;
 	for (int i = 0; i < forecastRange + 1; i++)
 	{
 		mDiffHistory.append(0);
@@ -118,14 +126,28 @@ void MotorComplect::adjustSpeed()
 	mLatestEncoderVal = current;
 	float const nextDiff = forecastNextValue();
 
-	//rewriting history
-	mPureHistory.at(mHistoryPointer) = current;
-	mDiffHistory.at(mHistoryPointer) = diff;
+	if (auxTime++ >= 120)
+	{
+		auxTime = 0;
+		float percent = (float)mHistoryPointer / ((float)mDiffHistory.size()) ;
+		qDebug() << "done: " << mHistoryPointer << mDiffHistory.size() << "\t" << percent;
+		qDebug() << "curr :: correct\t" << current << "\t" << mPureHistory.at(mHistoryPointer);
+		qDebug() << "diff :: forecast\t" << diff << "\t" << nextDiff << "\n";
+	}
 
-	//qDebug() << "curr :: correct" << currentValue << " " << correctValue;
+	//rewriting history
+	mPureHistory.replace(mHistoryPointer - 1, current);
+	mDiffHistory.replace(mHistoryPointer - 1, diff);
+
+
 	if (qAbs(diff - nextDiff) < epsilon)
 	{
 		return;
+	}
+
+	if (nextDiff == 0)
+	{
+		setMotorPower(0);
 	}
 
 	if (diff < nextDiff)
@@ -143,9 +165,12 @@ float MotorComplect::forecastNextValue()
 	int const histrorySize = mDiffHistory.size();
 	if (mHistoryPointer >= histrorySize)
 	{
+		setMotorPower(0);
+		mIsMotorBlocked = true;
 		emit playbackDone();
 		return mDiffHistory.last();
 	}
+	int lookForwardDistance = forecastRange;
 
 	while (mHistoryPointer >= histrorySize - lookForwardDistance)
 	{
@@ -154,16 +179,19 @@ float MotorComplect::forecastNextValue()
 
 	float result = 0;
 	int totalWeight = 0;
+
 	for (int i = 0; i < lookForwardDistance; i++)
 	{
 		result += mDiffHistory.at(mHistoryPointer + i) * (i + 1);
 		totalWeight += i + 1;
+
 	}
 	mHistoryPointer++;
+
 	return result / totalWeight;
 }
 
-void MotorComplect::saveHistoryToFile(QString &comment)
+void MotorComplect::saveHistoryToFile(QString comment)
 {
 	QString filename = "motorComplect_" + QString::number(mID) + "--"
 			+ comment
@@ -180,7 +208,7 @@ void MotorComplect::saveHistoryToFile(QString &comment)
 	{
 		line = QString::number(mPureHistory.at(i), 'f', 2) + " \t"
 				+ QString::number(mDiffHistory.at(i), 'f', 2) + "\n";
-		file->write(line.toUtf8());
+		file.write(line.toUtf8());
 	}
 	file.flush();
 	file.close();

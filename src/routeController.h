@@ -45,4 +45,7 @@ protected:
 	QList<trikControl::Motor *> motorList();
 	QList<trikControl::Encoder *> encoderList();
 	void sleep(unsigned int const &msec);
+
+protected slots:
+	void playbackStopped();
 };
