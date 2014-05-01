@@ -1,18 +1,14 @@
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
-#include <QtCore/QFile>
-#include <QtCore/QEventLoop>
-#include <QtCore/QStringList>
-
 #include <QtCore/QDebug>
 
 #include "trikControl/brick.h"
 #include "trackStorage.h"
 #include "routeRepeater.h"
-#include "motorComplect.h"
+#include "deviceExplorer.h"
 
+//! @class RouteController is a facade of route-repeat tech
+//! may be used in other thread
 class RouteController : public QObject
 {
 	Q_OBJECT
@@ -20,10 +16,14 @@ public:
 	explicit RouteController(QThread *guiThread);
 	~RouteController();
 
+	//! creates class objects after moving in new thread
+	//! fixes miss of moveToThread of child objects
+	void afterThreadInit();
 
 public slots:
 	//! will recognize devices with their ports
 	void initDevices();
+	void checkLoadedDevices();
 	void startTracking();
 	void stopTracking();
 	void playback();
@@ -33,18 +33,14 @@ signals:
 	void jobDone(bool);
 
 protected:
-	unsigned int const trackingTimeout = 100; // msec
-
-	trikControl::Brick mBrick;
+	QThread *mGuiThread;
+	DeviceExplorer *mDeviceInfo;
 	TrackStorage *mStorage;
 	RouteRepeater *mRouteRepeater;
 	QVector<MotorComplect *> *mMotorsComplect;
 
-	void resetEncoders();
-	void switchPowerMotors(int const power);
-	QList<trikControl::Motor *> motorList();
-	QList<trikControl::Encoder *> encoderList();
-	void sleep(unsigned int const &msec);
+	void turnPowerMotors(int const power);
+	void checkRAII();
 
 protected slots:
 	void playbackStopped();

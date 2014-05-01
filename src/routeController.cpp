@@ -3,155 +3,115 @@
 using namespace trikControl;
 
 RouteController::RouteController(QThread *guiThread)
-	: mBrick(*guiThread, "./")
+	: mGuiThread(guiThread)
+	, mDeviceInfo(nullptr)
+	, mStorage(nullptr)
+	, mRouteRepeater(nullptr)
 {
-	mMotorsComplect = new QVector<MotorComplect *>;
-	mStorage = new TrackStorage(mMotorsComplect, this);
-	mRouteRepeater = new RouteRepeater(mStorage, this);
-	connect(mRouteRepeater, SIGNAL(playbackDone()), SLOT(playbackStopped()));
-
 	qDebug() << "-- gui thread " << guiThread;
 }
 
 RouteController::~RouteController()
 {
-//	delete mRouteRepeater;
-//	delete mStorage;
-
+	if (mMotorsComplect == nullptr)
+	{
+		return;
+	}
 	foreach(MotorComplect *complect, *mMotorsComplect)
 	{
 		delete complect;
 	}
-
 	delete mMotorsComplect;
 }
 
-QList<Motor *> RouteController::motorList()
+void RouteController::afterThreadInit()
 {
-	QList<Motor *> result;
-
-	//qDebug() << "-- //<  all motor ports:";
-	foreach(QString const &port, mBrick.motorPorts(Motor::powerMotor))
-	{
-		Motor *motor = mBrick.motor(port);
-		if (motor != nullptr)
-		{
-			result << motor;
-			//qDebug() << "-- motor at port: " << port << "motor: " << motor;
-		}
-	}
-	//qDebug() << "-- /ports>";
-
-	return result;
+	mMotorsComplect = new QVector<MotorComplect *>;
+	mDeviceInfo = new DeviceExplorer(mMotorsComplect, this);
+	mStorage = new TrackStorage(mMotorsComplect, this);
+	mRouteRepeater = new RouteRepeater(mStorage, this);
+	connect(mRouteRepeater, SIGNAL(playbackDone()), SLOT(playbackStopped()));
 }
 
-QList<Encoder *> RouteController::encoderList()
-{
-	QList<Encoder *> result;
-	QStringList encoders;
-	encoders << "JB1" << "JB2" << "JB3" << "JB4" << "JM1" << "JM2" << "JM3" << "M1";
-
-	foreach (QString const &ePort, encoders)
-	{
-		Encoder *encoder = mBrick.encoder(ePort);
-		if (encoder != nullptr)
-		{
-			result << encoder;
-			//qDebug() << "encoder at" << ePort << ", encoder: " << encoder;
-		}
-	}
-	return result;
-}
-
-void RouteController::sleep(unsigned int const &msec)
-{
-	QEventLoop loop;
-	QTimer::singleShot(msec, &loop, SLOT(quit()));
-	loop.exec();
-}
 
 void RouteController::playbackStopped()
 {
 	emit jobDone(true);
 }
 
-void RouteController::switchPowerMotors(int const power)
+void RouteController::turnPowerMotors(int const power)
 {
-	foreach(Motor *motor, motorList())
+	foreach(MotorComplect *complect, (*mMotorsComplect))
 	{
-		motor->setPower(power);
+		complect->setMotorPower(power);
 	}
 }
 
+void RouteController::checkRAII()
+{
+	if (mMotorsComplect != nullptr)
+	{
+		return;
+	}
+
+	afterThreadInit();
+}
 
 void RouteController::startTracking()
 {
-	resetEncoders();
+	checkRAII();
 	mStorage->startRecording();
 	emit jobDone(true);
 }
 
 void RouteController::stopTracking()
 {
+	checkRAII();
 	mStorage->stopRecording();
 	emit jobDone(true);
 }
 
 void RouteController::playback()
 {
-	qDebug() << "controller, try reset encoder";
-	resetEncoders();
+	checkRAII();
 	mRouteRepeater->playback();
 }
 
 void RouteController::switchMotors(bool const willTurnOn)
 {
+	checkRAII();
 	int const power = (willTurnOn)? 85 : 0;
-	switchPowerMotors(power);
+	turnPowerMotors(power);
 	emit jobDone(true);
 }
 
 void RouteController::initDevices()
 {
-	int const testPower = 60;
-	float const epsilon = 10;
-	foreach (Motor *motor, motorList())
-	{
-		resetEncoders();
-		motor->setPower(testPower);
-		sleep(500);
-		motor->setPower(0);
+	checkRAII();
+	mDeviceInfo->reinitDevices();
+	emit jobDone(mMotorsComplect->size() > 0);
+}
 
-		float max = 0;
-		Encoder *machedEncoder = nullptr;
-		foreach(Encoder *encoder, encoderList())
-		{
-			if (qAbs(encoder->read()) < epsilon)
-			{
-				continue;
-			}
-			if (qAbs(encoder->read()) > max)
-			{
-				max = qAbs(encoder->read());
-				machedEncoder = encoder;
-			}
-		}
-		if (machedEncoder != nullptr)
-		{
-			qDebug() << "(motor, encoder) = " << motor << " " << machedEncoder;
-			mMotorsComplect->append(new MotorComplect(motor, machedEncoder, mMotorsComplect->size()));
-			qDebug() << "reversed?" << machedEncoder->read();
-			mMotorsComplect->last()->setReversed(machedEncoder->read() < 0);
-		}
+void RouteController::checkLoadedDevices()
+{
+	checkRAII();
+	bool const hasValidConfig = mDeviceInfo->hasValidConfig();
+	qDebug() << "has valid config: " << hasValidConfig;
+	if (!hasValidConfig)
+	{
+		qDebug() << "re-init requested!";
+		emit jobDone(false);
+		return;
 	}
-	qDebug() << "motors founded: " << mMotorsComplect->size();
+
+	qDebug() << "Complects: " << mMotorsComplect->size();
+	foreach (MotorComplect *complect, (*mMotorsComplect))
+	{
+		qDebug() << "id: " << complect->id()
+				<< "  motor: " << complect->motorPort()
+				<< "  encoder: " << complect->encoderPort()
+				<< "  isReversed: " << complect->isReversed() << "\n";
+	}
 	emit jobDone(true);
 }
 
-void RouteController::resetEncoders()
-{
-	foreach (Encoder *encoder, encoderList())
-	{
-		encoder->reset();
-	}
-}
