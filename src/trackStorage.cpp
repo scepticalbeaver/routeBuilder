@@ -2,68 +2,112 @@
 
 TrackStorage::TrackStorage(QVector<MotorComplect *> *array, QObject *parent)
 	: QObject(parent)
-	, mWatcher(nullptr)
 	, mMotorComplects(array)
+	, isFirstCapture(true)
 {
-	initTimer();
+	connect(&mWatcher, SIGNAL(timeout()), SLOT(trace()));
 }
 
 TrackStorage::~TrackStorage()
 {
+	foreach (QVector<float> *vector, mTrackLog.values())
+	{
+		delete vector;
+	}
 }
 
-void TrackStorage::stopRecording()
+QVector<float>* const TrackStorage::motorTrace(int const id) const
 {
-	mWatcher->stop();
-
-//	qDebug() << "history size: " << mDevices.last()->history.size();
-	for(int i = 0; i < mMotorComplects->size(); i++)
-	{
-		mMotorComplects->at(i)->completeHistory();
-	}
+	return mTrackLog.value(id);
 }
 
 void TrackStorage::startRecording()
 {
-	initTimer();
+	isFirstCapture = true;
+	clearTrackLog();
 
-	if (mMotorComplects->size() == 0)
+	mWatcher.start(timeout);
+}
+
+void TrackStorage::stopRecording()
+{
+	mWatcher.stop();
+	saveTraceToFile();
+}
+
+void TrackStorage::saveTraceToFile()
+{
+	int const count = mTrackLog.size();
+	QString filename = "mC-trace_" + QString::number(count) + "-wheels_"
+			+ QTime::currentTime().toString("hh-mm-ss-zzz") + ".log";
+	QFile file(filename);
+	if (!file.open(QFile::WriteOnly))
 	{
-		qDebug() << "--no tracking device found";
+		qDebug() << "could not create file";
 		return;
 	}
-	clearHistory();
 
-	mWatcher->start(timeout);
+	QString firstLine = "encoders data, wheels\' id: ";
+	foreach (int id, mTrackLog.keys())
+	{
+		firstLine += QString::number(id) + "\t";
+	}
+	firstLine += "\n";
+	file.write(firstLine.toUtf8());
+
+	int const dataLength = mTrackLog.values().first()->size();
+	QString line("");
+	for (int i = 0; i < dataLength; i++)
+	{
+		foreach (int id, mTrackLog.keys())
+		{
+			line += QString::number(mTrackLog.value(id)->at(i), 'f', 2) + "\t";
+		}
+		line += "\n";
+		file.write(line.toUtf8());
+	}
+	file.flush();
+	file.close();
+	qDebug() << "Trace saved to file \"" << filename << "\" with datalength: " << dataLength;
 }
 
-QVector<MotorComplect *> *TrackStorage::devices()
+void TrackStorage::clearTrackLog()
 {
-	return mMotorComplects;
+	foreach (QVector<float> *vector, mTrackLog.values())
+	{
+		delete vector;
+	}
+
+	foreach (MotorComplect *motor, (*mMotorComplects))
+	{
+		mTrackLog.insert(motor->id(), new QVector<float>());
+	}
 }
 
-void TrackStorage::initTimer()
+void TrackStorage::trace()
 {
-	if (mWatcher != nullptr)
+	bool hasChange = false;
+	if (!isFirstCapture)
+	{
+		foreach (MotorComplect *motor, (*mMotorComplects))
+		{
+			hasChange = hasChange || (qAbs(motor->readEncoder() - mTrackLog.value(motor->id())->last()) > epsilon);
+		}
+	}
+	else
+	{
+		hasChange = true;
+		isFirstCapture = false;
+	}
+
+	if (!hasChange)
 	{
 		return;
 	}
-	mWatcher = new QTimer(this);
-	connect(mWatcher, SIGNAL(timeout()), this, SLOT(readEncoders()));
-}
 
-void TrackStorage::readEncoders()
-{
-	for(int i = 0; i < mMotorComplects->size(); i++)
+	foreach (MotorComplect *motor, (*mMotorComplects))
 	{
-		mMotorComplects->at(i)->updateHistory();
+		mTrackLog.value(motor->id())->append(motor->readEncoder());
 	}
 }
 
-void TrackStorage::clearHistory()
-{
-	for (int i = 0; i < mMotorComplects->size(); i++)
-	{
-		mMotorComplects->at(i)->clearHistory();
-	}
-}

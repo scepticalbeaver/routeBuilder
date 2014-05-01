@@ -2,7 +2,6 @@
 
 #include <QtCore/QDebug>
 
-#include "trikControl/brick.h"
 #include "trackStorage.h"
 #include "routeRepeater.h"
 #include "deviceExplorer.h"

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <QtCore/QMap>
+#include <QtCore/QFile>
 #include <QtCore/QTimer>
 #include <QtCore/QVector>
-#include <QtCore/QList>
 
 #include <QDebug>
 
@@ -15,22 +16,30 @@ public:
 	explicit TrackStorage(QVector<MotorComplect *> *array, QObject *parent = 0);
 	~TrackStorage();
 
-	static int const timeout = 6;
+	QVector<float>* const motorTrace(int const id) const;
 
-	QVector<MotorComplect *> *devices();
+
+
 
 public slots:
 	void startRecording();
 	void stopRecording();
 
 protected:
-	QTimer *mWatcher;
-	QVector<MotorComplect *> *mMotorComplects;
+	static int const timeout = 500; //ms
+	static float const epsilon = 10;
 
-	void initTimer();
-	void clearHistory();
+	QTimer mWatcher;
+	QVector<MotorComplect *> *mMotorComplects;
+	QMap<int, QVector<float> *> mTrackLog;
+	bool isFirstCapture;
+
+	void saveTraceToFile();
+	void clearTrackLog();
 
 protected slots:
-	void readEncoders();
+	void trace();
+
+
 };
 
