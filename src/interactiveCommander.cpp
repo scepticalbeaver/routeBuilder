@@ -11,6 +11,7 @@ InteractiveCommander::InteractiveCommander(QThread *guiThread, QObject *parent)
 	mRouteController = new RouteController(mGuiThread);
 	mAlternativeThread = new QThread(this);
 	mRouteController->moveToThread(mAlternativeThread);
+	mRouteController->afterThreadInit();
 	mAlternativeThread->start();
 	initConnections();
 }
@@ -35,6 +36,7 @@ void InteractiveCommander::initConnections()
 	connect(this, SIGNAL(turnMotorsRequested(bool)), mRouteController, SLOT(switchMotors(bool)), Qt::QueuedConnection);
 	connect(this, SIGNAL(initDevicesRequest()), mRouteController, SLOT(initDevices()), Qt::QueuedConnection);
 	connect(this, SIGNAL(playbackRequested()), mRouteController, SLOT(playback()), Qt::QueuedConnection);
+	connect(this, SIGNAL(checkingDevice()), mRouteController, SLOT(checkLoadedDevices()), Qt::QueuedConnection);
 	connect(mRouteController, SIGNAL(jobDone(bool)), SLOT(routeActionFinished(bool)));
 }
 
@@ -48,21 +50,24 @@ void InteractiveCommander::loopRound()
 	switch (decision)
 	{
 	case 1:
-		initDevicesSignal();
+		emit checkingDevice();
 		break;
 	case 2:
-		launchTracking();
+		initDevicesSignal();
 		break;
 	case 3:
-		completeTracking();
+		launchTracking();
 		break;
 	case 4:
-		startPlayback();
+		completeTracking();
 		break;
 	case 5:
-		switchMotors(true);
+		startPlayback();
 		break;
 	case 6:
+		switchMotors(true);
+		break;
+	case 7:
 		switchMotors(false);
 		break;
 	case 0:
@@ -75,12 +80,13 @@ void InteractiveCommander::loopRound()
 void InteractiveCommander::printRoundMsg()
 {
 	cout << endl << endl << "Type:\n"
-			<< "1) init devices (do it first!)\n"
-			<< "2) start tracking\n"
-			<< "3) stop tracking\n"
-			<< "4) repeat track\n"
-			<< "5) turn on motors\n"
-			<< "6) stop motors\n"
+			<< "1) check loaded devices\n"
+			<< "2) init devices\n"
+			<< "3) start tracking\n"
+			<< "4) stop tracking\n"
+			<< "5) repeat track\n"
+			<< "6) turn on motors\n"
+			<< "7) stop motors\n"
 			<< "0) exit program\n> ";
 }
 

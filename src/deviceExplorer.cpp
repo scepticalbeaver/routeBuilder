@@ -70,6 +70,11 @@ void DeviceExplorer::reinitDevices()
 	saveDevicesInfo();
 }
 
+bool DeviceExplorer::hasValidConfig() const
+{
+	return mHasSavedInfo;
+}
+
 void DeviceExplorer::loadDeviceConfiguration()
 {
 	mHasSavedInfo = mDeviceInfo->value("modified", false).toBool();
@@ -105,6 +110,7 @@ void DeviceExplorer::loadDeviceConfiguration()
 	{
 		qDebug() << "device configuration was changed. Make reinit!";
 		mMotorsComplect->clear();
+		mHasSavedInfo = false;
 		return;
 	}
 

@@ -23,6 +23,7 @@ signals:
 	void turnMotorsRequested(bool);
 	void initDevicesRequest();
 	void playbackRequested();
+	void checkingDevice();
 
 protected:
 	QThread *mGuiThread;

@@ -28,6 +28,8 @@ public:
 	//! updates motor-complects vector and saves settings to file
 	void reinitDevices();
 
+	bool hasValidConfig() const;
+
 protected:
 	trikControl::Brick mBrick;
 	QVector<MotorComplect *> *mMotorsComplect;
