@@ -41,5 +41,4 @@ protected:
 
 protected slots:
 	void routeActionFinished(bool const successfully);
-
 };

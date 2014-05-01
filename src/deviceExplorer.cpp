@@ -2,15 +2,22 @@
 
 using namespace trikControl;
 
-namespace settingsKeys
+class SettingsKeys
 {
-enum Keys
-{
-	motorPort
-	, encoderPort
-	, isReversed
+public:
+	static QString motorPort()
+	{
+		return QString("motorPort");
+	}
+	static QString encoderPort()
+	{
+		return QString("encoderPort");
+	}
+	static QString isReversed()
+	{
+		return QString("isReversed");
+	}
 };
-}
 
 DeviceExplorer::DeviceExplorer(QThread *guiThread, QVector<MotorComplect *> *complects, QObject *parent)
 	: QObject(parent)
@@ -32,8 +39,8 @@ DeviceExplorer::~DeviceExplorer()
 void DeviceExplorer::reinitDevices()
 {
 	mMotorsComplect->clear();
-	QMap<Motor*, QString> motors = motors();
-	QMap<Encoder*, QString> encoders = encoders();
+	QMap<Motor*, QString> motors(this->motors());
+	QMap<Encoder*, QString> encoders(this->encoders());
 	float const epsilon = 10;
 	foreach (Motor *motor, motors.keys())
 	{
@@ -90,9 +97,9 @@ void DeviceExplorer::loadDeviceConfiguration()
 	foreach (QString groupId, mDeviceInfo->childGroups())
 	{
 		mDeviceInfo->beginGroup(groupId);
-		motorPort = mDeviceInfo->value(settingsKeys::motorPort);
-		encoderPort = mDeviceInfo->value(settingsKeys::encoderPort);
-		bool const isReversed = mDeviceInfo->value(settingsKeys::isReversed);
+		motorPort = mDeviceInfo->value(SettingsKeys::motorPort()).toString();
+		encoderPort = mDeviceInfo->value(SettingsKeys::encoderPort()).toString();
+		bool const isReversed = mDeviceInfo->value(SettingsKeys::isReversed()).toBool();
 		mDeviceInfo->endGroup();
 		Motor *motor = mBrick.motor(motorPort);
 		Encoder *encoder = mBrick.encoder(encoderPort);
@@ -126,12 +133,12 @@ void DeviceExplorer::saveDevicesInfo()
 	mDeviceInfo->setValue("modified", true);
 }
 
-void DeviceExplorer::saveDevice(MotorComplect const *complect)
+void DeviceExplorer::saveDevice(MotorComplect const *motor)
 {
-	mDeviceInfo->beginGroup(complect->id());
-	mDeviceInfo->setValue(settingsKeys::motorPort, complect->motorPort());
-	mDeviceInfo->setValue(settingsKeys::encoderPort, complect->encoderPort());
-	mDeviceInfo->setValue(settingsKeys::isReversed, complect->isReversed());
+	mDeviceInfo->beginGroup(QString::number(motor->id()));
+	mDeviceInfo->setValue(SettingsKeys::motorPort(), motor->motorPort());
+	mDeviceInfo->setValue(SettingsKeys::encoderPort(), motor->encoderPort());
+	mDeviceInfo->setValue(SettingsKeys::isReversed(), motor->isReversed());
 	mDeviceInfo->endGroup();
 }
 
@@ -152,7 +159,7 @@ void DeviceExplorer::warmUpEngine(Motor *motor)
 
 void DeviceExplorer::resetEncoders()
 {
-	resetEncoders(encoders.keys());
+	resetEncoders(encoders().keys());
 }
 
 void DeviceExplorer::resetEncoders(QList<Encoder *> encoders)

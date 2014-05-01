@@ -1,16 +1,11 @@
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QMap>
 #include <QtCore/QTimer>
-#include <QtCore/QString>
 #include <QtCore/QSettings>
 #include <QtCore/QEventLoop>
-#include <QtCore/QStringList>
 
 #include <QDebug>
 
-#include "trikControl/brick.h"
 #include "motorComplect.h"
 
 //! @class DeviceExplorer stores in QSettings all MotorComplects
@@ -38,11 +33,11 @@ protected:
 
 	void loadDeviceConfiguration();
 	void saveDevicesInfo();
-	void saveDevice(MotorComplect const *complect);
+	void saveDevice(MotorComplect const *motor);
 	void sleep(unsigned int const &msec);
-	void warmUpEngine(Motor *motor);
+	void warmUpEngine(trikControl::Motor *motor);
 	void resetEncoders();
-	void resetEncoders(QList<Encoder*> encoders);
+	void resetEncoders(QList<trikControl::Encoder* > encoders);
 	QMap<trikControl::Motor *, QString> motors();
 	QMap<trikControl::Encoder *, QString> encoders();
 };

@@ -27,9 +27,9 @@ RouteController::~RouteController()
 void RouteController::afterThreadInit()
 {
 	mMotorsComplect = new QVector<MotorComplect *>;
-	mDeviceInfo = new DeviceExplorer(mMotorsComplect, this);
+	mDeviceInfo = new DeviceExplorer(mGuiThread, mMotorsComplect, this);
 	mStorage = new TrackStorage(mMotorsComplect, this);
-	mRouteRepeater = new RouteRepeater(mStorage, this);
+	mRouteRepeater = new RouteRepeater(mMotorsComplect, mStorage, this);
 	connect(mRouteRepeater, SIGNAL(playbackDone()), SLOT(playbackStopped()));
 }
 

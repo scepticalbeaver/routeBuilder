@@ -1,9 +1,8 @@
 #pragma once
 
-#include <QtCore/QMap>
 #include <QtCore/QFile>
 #include <QtCore/QTimer>
-#include <QtCore/QVector>
+#include <QtCore/QTime>
 
 #include <QDebug>
 
@@ -18,16 +17,13 @@ public:
 
 	QVector<float>* const motorTrace(int const id) const;
 
-
-
-
 public slots:
 	void startRecording();
 	void stopRecording();
 
 protected:
 	static int const timeout = 500; //ms
-	static float const epsilon = 10;
+	float const epsilon = 10;
 
 	QTimer mWatcher;
 	QVector<MotorComplect *> *mMotorComplects;
@@ -39,7 +35,5 @@ protected:
 
 protected slots:
 	void trace();
-
-
 };
 
