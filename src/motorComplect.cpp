@@ -2,25 +2,15 @@
 
 using namespace trikControl;
 
-MotorComplect::MotorComplect(Motor *motor, Encoder *motorEncoder, int const &complectID)
+MotorComplect::MotorComplect(int const &complectID, Motor *motor, Encoder *motorEncoder, bool const &isReversed)
 	: mMotor(motor)
 	, mEncoder(motorEncoder)
 	, mPower(0)
 	, mIncrement(5)
 	, mID(complectID)
-	, mIsReversed(false)
+	, mIsReversed(isReversed)
 	, mIsMotorBlocked(false)
 {
-}
-
-void MotorComplect::setMotor(trikControl::Motor *motor)
-{
-	mMotor = motor;
-}
-
-void MotorComplect::setEncoder(trikControl::Encoder *motorEncoder)
-{
-	mEncoder = motorEncoder;
 }
 
 void MotorComplect::setOrigins(QString const &motorPort, QString const &encoderPort)
@@ -37,16 +27,6 @@ QString MotorComplect::motorPort() const
 QString MotorComplect::encoderPort() const
 {
 	return mEncoderPort;
-}
-
-trikControl::Motor* MotorComplect::motor()
-{
-	return mMotor;
-}
-
-trikControl::Encoder* MotorComplect::encoder()
-{
-	return mEncoder;
 }
 
 int MotorComplect::id() const
@@ -77,7 +57,7 @@ void MotorComplect::setMotorPower(int power)
 	mPower = power;
 }
 
-void MotorComplect::keepSpeed(float const metersPerSecond)
+void MotorComplect::keepSpeed(float const &metersPerSecond)
 {
 	int const expPower = 100;
 	float const expVelocity = 1.1;  //meters per second
@@ -90,11 +70,6 @@ void MotorComplect::keepSpeed(float const metersPerSecond)
 void MotorComplect::setIncrement(int const &increment)
 {
 	mIncrement = increment;
-}
-
-void MotorComplect::setReversed(bool const &isReversed)
-{
-	mIsReversed = isReversed;
 }
 
 bool MotorComplect::isReversed() const

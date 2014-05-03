@@ -38,18 +38,19 @@ DeviceExplorer::~DeviceExplorer()
 
 void DeviceExplorer::reinitDevices()
 {
+	qDeleteAll(*mMotorsComplect);
 	mMotorsComplect->clear();
-	QMap<Motor*, QString> motors(this->motors());
-	QMap<Encoder*, QString> encoders(this->encoders());
+
 	float const epsilon = 10;
-	foreach (Motor *motor, motors.keys())
+	foreach (QString const &motorPort, mBrick.motorPorts(Motor::powerMotor))
 	{
-		resetEncoders(encoders.keys());
-		warmUpEngine(motor);
+		Motor *curMotor = mBrick.motor(motorPort);
+		resetEncoders();
+		warmUpEngine(curMotor);
 
 		float max = 0;
 		Encoder *machedEncoder = nullptr;
-		foreach(Encoder *encoder, encoders.keys())
+		foreach(Encoder *encoder, encoders().keys())
 		{
 			float absValue = qAbs(encoder->read());
 			if (absValue < epsilon)
@@ -64,13 +65,17 @@ void DeviceExplorer::reinitDevices()
 		}
 		if (machedEncoder != nullptr)
 		{
-			qDebug() << "(motor, encoder) = " << motors.value(motor) << " " << encoders.value(machedEncoder);
-			mMotorsComplect->append(new MotorComplect(motor, machedEncoder, mMotorsComplect->size()));
-			mMotorsComplect->last()->setOrigins(motors.value(motor), encoders.value(machedEncoder));
-
+			qDebug() << "(motor, encoder) = " << motorPort << " " << encoders().value(machedEncoder);
 			bool const isReversed = machedEncoder->read() < 0;
 			qDebug() << "reversed?" << isReversed;
-			mMotorsComplect->last()->setReversed(isReversed);
+
+			mMotorsComplect->append(new MotorComplect(
+					mMotorsComplect->size()
+					, curMotor
+					, machedEncoder
+					, isReversed
+					));
+			mMotorsComplect->last()->setOrigins(motorPort, encoders().value(machedEncoder));
 		}
 	}
 	qDebug() << "motors founded: " << mMotorsComplect->size();
@@ -108,14 +113,14 @@ void DeviceExplorer::loadDeviceConfiguration()
 			isDeviceConfigChanged = true;
 			break;
 		}
-		mMotorsComplect->append(new MotorComplect(motor, encoder, groupId.toInt()));
-		mMotorsComplect->last()->setReversed(isReversed);
+		mMotorsComplect->append(new MotorComplect(groupId.toInt(), motor, encoder, isReversed));
 		mMotorsComplect->last()->setOrigins(motorPort, encoderPort);
 	}
 
 	if (isDeviceConfigChanged)
 	{
 		qDebug() << "device configuration was changed. Make reinit!";
+		qDeleteAll(*mMotorsComplect);
 		mMotorsComplect->clear();
 		mHasSavedInfo = false;
 		return;
@@ -133,12 +138,12 @@ void DeviceExplorer::saveDevicesInfo()
 	mDeviceInfo->setValue("modified", true);
 }
 
-void DeviceExplorer::saveDevice(MotorComplect const *motor)
+void DeviceExplorer::saveDevice(MotorComplect const *complect)
 {
-	mDeviceInfo->beginGroup(QString::number(motor->id()));
-	mDeviceInfo->setValue(SettingsKeys::motorPort(), motor->motorPort());
-	mDeviceInfo->setValue(SettingsKeys::encoderPort(), motor->encoderPort());
-	mDeviceInfo->setValue(SettingsKeys::isReversed(), motor->isReversed());
+	mDeviceInfo->beginGroup(QString::number(complect->id()));
+	mDeviceInfo->setValue(SettingsKeys::motorPort(), complect->motorPort());
+	mDeviceInfo->setValue(SettingsKeys::encoderPort(), complect->encoderPort());
+	mDeviceInfo->setValue(SettingsKeys::isReversed(), complect->isReversed());
 	mDeviceInfo->endGroup();
 }
 
@@ -159,31 +164,10 @@ void DeviceExplorer::warmUpEngine(Motor *motor)
 
 void DeviceExplorer::resetEncoders()
 {
-	resetEncoders(encoders().keys());
-}
-
-void DeviceExplorer::resetEncoders(QList<Encoder *> encoders)
-{
-	foreach (Encoder *encoder, encoders)
+	foreach (Encoder *encoder, encoders().keys())
 	{
 		encoder->reset();
 	}
-}
-
-QMap<Motor *, QString> DeviceExplorer::motors()
-{
-	QMap<Motor *, QString> result;
-
-	foreach(QString const &port, mBrick.motorPorts(Motor::powerMotor))
-	{
-		Motor *motor = mBrick.motor(port);
-		if (motor != nullptr)
-		{
-			result.insert(motor, port);
-		}
-	}
-
-	return result;
 }
 
 QMap<Encoder *, QString> DeviceExplorer::encoders()
