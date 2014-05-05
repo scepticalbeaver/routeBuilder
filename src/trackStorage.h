@@ -15,7 +15,7 @@ public:
 	explicit TrackStorage(QVector<MotorComplect *> *array, QObject *parent = 0);
 	~TrackStorage();
 
-	QVector<float>* const motorTrace(int const id) const;
+	QVector<float>* motorTrace(int const id) const;
 
 public slots:
 	void startRecording();
@@ -23,7 +23,7 @@ public slots:
 
 protected:
 	static int const timeout = 500; //ms
-	float const epsilon = 10;
+	float const epsilon = 3;
 
 	QTimer mWatcher;
 	QVector<MotorComplect *> *mMotorComplects;

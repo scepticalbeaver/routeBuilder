@@ -18,9 +18,7 @@ InteractiveCommander::InteractiveCommander(QThread *guiThread, QObject *parent)
 
 InteractiveCommander::~InteractiveCommander()
 {
-	int const timeout = 1000;
-	mAlternativeThread->terminate();
-	mAlternativeThread->wait(timeout);
+	stopAuxThread();
 	delete mAlternativeThread;
 }
 
@@ -71,8 +69,8 @@ void InteractiveCommander::loopRound()
 		switchMotors(false);
 		break;
 	case 0:
-		mAlternativeThread->quit();
-		mGuiThread->quit();
+		stopAuxThread();
+		mGuiThread->terminate();
 		break;
 	}
 }
@@ -118,6 +116,16 @@ void InteractiveCommander::switchMotors(bool const willTurnOn)
 {
 	emit turnMotorsRequested(willTurnOn);
 	cout << endl << "Sending message to motors..." << endl;
+}
+
+void InteractiveCommander::stopAuxThread()
+{
+	int const timeoutMSec = 500;
+	if (mAlternativeThread->isRunning())
+	{
+		mAlternativeThread->terminate();
+		mAlternativeThread->wait(timeoutMSec);
+	}
 }
 
 void InteractiveCommander::routeActionFinished(const bool successfully)

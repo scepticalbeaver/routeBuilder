@@ -16,7 +16,7 @@ TrackStorage::~TrackStorage()
 	}
 }
 
-QVector<float>* const TrackStorage::motorTrace(int const id) const
+QVector<float>* TrackStorage::motorTrace(int const id) const
 {
 	return mTrackLog.value(id);
 }

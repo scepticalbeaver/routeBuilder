@@ -28,7 +28,7 @@ DeviceExplorer::DeviceExplorer(QThread *guiThread, QVector<MotorComplect *> *com
 	QString settingsFile = "deviceInfo.ini";
 	mDeviceInfo = new QSettings(settingsFile, QSettings::IniFormat, this);
 
-	loadDeviceConfiguration();
+	//loadDeviceConfiguration();
 }
 
 DeviceExplorer::~DeviceExplorer()
@@ -41,7 +41,7 @@ void DeviceExplorer::reinitDevices()
 	qDeleteAll(*mMotorsComplect);
 	mMotorsComplect->clear();
 
-	float const epsilon = 10;
+	float const epsilon = 5;
 	foreach (QString const &motorPort, mBrick.motorPorts(Motor::powerMotor))
 	{
 		Motor *curMotor = mBrick.motor(motorPort);
@@ -53,6 +53,7 @@ void DeviceExplorer::reinitDevices()
 		foreach(Encoder *encoder, encoders().keys())
 		{
 			float absValue = qAbs(encoder->read());
+
 			if (absValue < epsilon)
 			{
 				continue;

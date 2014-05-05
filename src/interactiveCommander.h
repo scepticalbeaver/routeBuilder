@@ -38,6 +38,7 @@ protected:
 	void completeTracking();
 	void startPlayback();
 	void switchMotors(bool const willTurnOn);
+	void stopAuxThread();
 
 protected slots:
 	void routeActionFinished(bool const successfully);
