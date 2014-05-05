@@ -17,10 +17,7 @@ RouteController::~RouteController()
 	{
 		return;
 	}
-	foreach(MotorComplect *complect, *mMotorsComplect)
-	{
-		delete complect;
-	}
+	qDeleteAll(*mMotorsComplect);
 	delete mMotorsComplect;
 }
 

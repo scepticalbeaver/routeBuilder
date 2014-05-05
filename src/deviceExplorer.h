@@ -33,11 +33,10 @@ protected:
 
 	void loadDeviceConfiguration();
 	void saveDevicesInfo();
-	void saveDevice(MotorComplect const *motor);
+	void saveDevice(MotorComplect const *complect);
 	void sleep(unsigned int const &msec);
 	void warmUpEngine(trikControl::Motor *motor);
 	void resetEncoders();
-	void resetEncoders(QList<trikControl::Encoder* > encoders);
-	QMap<trikControl::Motor *, QString> motors();
+
 	QMap<trikControl::Encoder *, QString> encoders();
 };
