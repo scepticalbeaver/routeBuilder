@@ -6,11 +6,15 @@ MotorComplect::MotorComplect(int const &complectID, Motor *motor, Encoder *motor
 	: mMotor(motor)
 	, mEncoder(motorEncoder)
 	, mPower(0)
-	, mIncrement(5)
+	, mIncrement(1)
 	, mID(complectID)
 	, mIsReversed(isReversed)
 	, mIsMotorBlocked(false)
+	, mPrevEncoderDiff(0)
+	, mPrevEncoderValue(0)
+	, mProperEncDiff(0)
 {
+	connect(&mSpeedKeeper,SIGNAL(timeout()), SLOT(keepSpeed()));
 }
 
 void MotorComplect::setOrigins(QString const &motorPort, QString const &encoderPort)
@@ -42,6 +46,7 @@ float MotorComplect::readEncoder()
 void MotorComplect::resetEncoder()
 {
 	mEncoder->reset();
+	mPrevEncoderDiff = 0;
 }
 
 void MotorComplect::setMotorPower(int power)
@@ -57,14 +62,27 @@ void MotorComplect::setMotorPower(int power)
 	mPower = power;
 }
 
-void MotorComplect::keepSpeed(float const &metersPerSecond)
+void MotorComplect::setSpeed(float const &metersPerSecond)
 {
-	int const expPower = 100;
+	int const maxPower = 100;
 	float const expVelocity = 1.1;  //meters per second
+/*
+	mProperEncDiff = (metersPerSecond * (this->timeout / 1000)) / (pi * wheelDiameter) * encodersPerRound;
 
-	float properPower = expPower * (metersPerSecond / expVelocity);
+	float const encMaxDiff = maxDiffPerMS * this->timeout;
+
+	float properPower = (mProperEncDiff / encMaxDiff) * maxPower;
+*/
+	float properPower = maxPower * (metersPerSecond / expVelocity);
 	properPower = qMin(properPower, 100.0f);
 	setMotorPower(int(properPower));
+
+
+
+	if (qAbs(metersPerSecond) >= 0.001)
+	{
+		mSpeedKeeper.start(this->timeout);
+	}
 }
 
 void MotorComplect::setIncrement(int const &increment)
@@ -85,4 +103,32 @@ void MotorComplect::increaseSpeed()
 void MotorComplect::decreaseSpeed()
 {
 	setMotorPower(mPower - mIncrement);
+}
+
+bool MotorComplect::isStable(float const &curEncoder) const
+{
+	float const stablePercent = 0.17;
+	float const diffPercent = qAbs(1 - (curEncoder / mPrevEncoderDiff));
+	return (diffPercent <= stablePercent);
+}
+
+void MotorComplect::keepSpeed()
+{
+	float const eps = 1;
+	float const encoderValue = mEncoder->read();
+	float const dEnc = encoderValue - mPrevEncoderValue;
+	if (isStable(dEnc))
+	{
+		if (dEnc - mProperEncDiff < eps)
+		{
+			increaseSpeed();
+		}
+		if (dEnc - mProperEncDiff > eps)
+		{
+			decreaseSpeed();
+		}
+	}
+
+	mPrevEncoderValue = encoderValue;
+	mPrevEncoderDiff = dEnc;
 }

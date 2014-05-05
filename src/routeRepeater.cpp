@@ -121,7 +121,7 @@ void RouteRepeater::adjustMotors()
 	{
 		properVelocity = recommendVelocity * (difference.value(motor->id()) / maxDifference);
 		properVelocity = properVelocity * (hasReverseVelocity(motor->id()))? -1 : 1;
-		motor->keepSpeed(properVelocity);
+		motor->setSpeed(properVelocity);
 	}
 }
 

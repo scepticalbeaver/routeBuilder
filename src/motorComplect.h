@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QTimer>
+
 #include <QDebug>
 
 #include "trikControl/brick.h"
@@ -28,13 +30,18 @@ public:
 	void resetEncoder();
 
 	void setMotorPower(int power);
-	void keepSpeed(float const &metersPerSecond);
+	void setSpeed(float const &metersPerSecond);
 
 	void setIncrement(int const &increment);
 	void increaseSpeed();
 	void decreaseSpeed();
 
 protected:
+	static int const timeout = 20;
+	static constexpr float wheelDiameter = 0.2; //[meters]
+	static constexpr float encodersPerRound = 410;
+	static constexpr float maxDiffPerMS = 12 / 10;
+
 	trikControl::Motor *mMotor;
 	trikControl::Encoder *mEncoder;
 	int mPower;
@@ -42,7 +49,16 @@ protected:
 	int const mID;
 	bool mIsReversed;
 	bool mIsMotorBlocked;
+	float mPrevEncoderDiff;
+	float mPrevEncoderValue;
+	float mProperEncDiff;
 	QString mMotorPort;
 	QString mEncoderPort;
+	QTimer mSpeedKeeper;
+
+	bool isStable(float const &curEncoder) const;
+
+protected slots:
+	void keepSpeed();
 };
 
