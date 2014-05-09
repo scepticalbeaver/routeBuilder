@@ -1,4 +1,4 @@
-TEMPLATE = app
+TEMPLATE = lib
 CONFIG += console
 CONFIG -= app_bundle
 CONFIG += qt
@@ -9,15 +9,17 @@ QMAKE_CXXFLAGS += -std=c++11
 
 TARGET = emtest
 
-DESTDIR = bin
-OBJECTS_DIR = .obj
-MOC_DIR = .moc
+include(../globals.pri)
 
-SOURCES += main.cpp \
+SOURCES += \#main.cpp \
     motorDevice.cpp \
-    brickEmulator.cpp
+    brickEmulator.cpp \
+    motorEmulator.cpp \
+    encoderEmulator.cpp
 
 HEADERS += \
     motorDevice.h \
-    brickEmulator.h
+    brickEmulator.h \
+    motorEmulator.h \
+    encoderEmulator.h
 

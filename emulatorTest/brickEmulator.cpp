@@ -8,26 +8,19 @@ BrickEmulator::BrickEmulator(int const &motorsCount)
 	for (int i = 0; i < motorsCount; i++)
 	{
 		mMotorDevices << new MotorDevice(this);
-		mPowerMotors.insert(QString("JM") + QString::number(i + 1), new MotorWrap(mMotorDevices.last()));
-		mEncoders.insert(QString("JB") + QString::number(i + 1), new EncoderWrap(mMotorDevices.last()));
+		mPowerMotors.insert(QString("JM") + QString::number(i + 1), new MotorEmulator(mMotorDevices.last()));
+		mEncoders.insert(QString("JB") + QString::number(i + 1), new EncoderEmulator(mMotorDevices.last()));
 	}
 }
 
-MotorWrap *BrickEmulator::motor(QString const &port)
+MotorEmulator* BrickEmulator::motor(QString const &port)
 {
 	return mPowerMotors.value(port, nullptr);
 }
 
-QStringList BrickEmulator::motorPorts(trikControl::Motor::Type type) const
+QStringList BrickEmulator::motorPorts() const
 {
-	if (type == trikControl::Motor::powerMotor)
-	{
-		return mPowerMotors.keys();
-	}
-	else
-	{
-		return QStringList();
-	}
+	return mPowerMotors.keys();
 }
 
 QStringList BrickEmulator::encoderPorts() const
@@ -35,7 +28,7 @@ QStringList BrickEmulator::encoderPorts() const
 	return mEncoders.keys();
 }
 
-EncoderWrap *BrickEmulator::encoder(QString const &port)
+EncoderEmulator* BrickEmulator::encoder(QString const &port)
 {
 	return mEncoders.value(port, nullptr);
 }

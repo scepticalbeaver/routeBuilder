@@ -26,8 +26,8 @@ protected:
 	static int const timeout = 10;
 	static constexpr double accelerate = 1.64; //mpss
 	static constexpr double maxSpeed = 1.8; // mps
-	static constexpr float encPerRound = 420;
-	static constexpr double diameter = 0.2; //meters
+	static constexpr float encPerRound = 395;
+	static constexpr double diameter = 0.18; //meters
 	static constexpr double pi()
 	{
 		return 4 * std::atan(1);

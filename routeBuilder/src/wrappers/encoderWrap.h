@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../../trikRuntime/trikControl/include/trikControl/encoder.h"
-#include "../../emulatorTest/motorDevice.h"
+#include "../../emulatorTest/encoderEmulator.h"
 
 
 //! @class EncoderWrap is a container for encoder of real or emulation type
@@ -10,7 +10,7 @@ class EncoderWrap : public QObject
 	Q_OBJECT
 public:
 	explicit EncoderWrap(trikControl::Encoder *encoder);
-	explicit EncoderWrap(emulators::MotorDevice *encoder);
+	explicit EncoderWrap(emulators::EncoderEmulator *encoder);
 
 	~EncoderWrap() {}
 public slots:
@@ -23,6 +23,6 @@ public slots:
 protected:
 	bool const mHasRealDevice;
 	trikControl::Encoder *mRealEncoder;
-	emulators::MotorDevice *mEncoderEmulator;
+	emulators::EncoderEmulator *mEncoderEmulator;
 };
 

@@ -8,7 +8,7 @@ EncoderWrap::EncoderWrap(trikControl::Encoder *encoder)
 {
 }
 
-EncoderWrap::EncoderWrap(emulators::MotorDevice *encoder)
+EncoderWrap::EncoderWrap(emulators::EncoderEmulator *encoder)
 	: QObject(encoder)
 	, mHasRealDevice(false)
 	, mRealEncoder(nullptr)
@@ -24,7 +24,7 @@ float EncoderWrap::read()
 	}
 	else
 	{
-		return mEncoderEmulator->readEncoder();
+		return mEncoderEmulator->read();
 	}
 }
 
@@ -36,7 +36,7 @@ void EncoderWrap::reset()
 	}
 	else
 	{
-		mEncoderEmulator->resetEncoder();
+		mEncoderEmulator->reset();
 	}
 }
 

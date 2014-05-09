@@ -1,5 +1,10 @@
-TRIKCONTROL_BINDIR = $$PWD/../trikRuntime/bin/arm-release
+include(../globals.pri)
+
 TRIKCONTROL_DIR = $$PWD/../trikRuntime/trikControl
+
+EMULATORS_BINDIR = $$PWD/../bin
+EMULATORS_DIR = $$PWD/../emulatorTest
+
 
 QT       += core
 QT       += network
@@ -17,18 +22,21 @@ TARGET = routeBuilder
 INCLUDEPATH = \
 	$$PWD \
 	$$BOOST_DIR \
+	$$EMULATORS_DIR \
 	$$TRIKCONTROL_DIR/include \
 
-LIBS += -L$$TRIKCONTROL_BINDIR -ltrikControl
+#LIBS += -L$$TRIKCONTROL_BINDIR -ltrikControl
+LIBS += -L$$EMULATORS_BINDIR -lemtest -L$$TRIKCONTROL_BINDIR -ltrikControl-x86-d
 
 !macx {
-	QMAKE_LFLAGS += -Wl,-O1,-rpath,.
+    QMAKE_LFLAGS += -Wl,-O1,-rpath,.
+    QMAKE_LFLAGS += -Wl,-rpath-link,$$DESTDIR
 }
 
+unix: {
+    QMAKE_POST_LINK =  "cp -rf $$TRIKCONTROL_BINDIR/libtrikControl* $$DESTDIR"
+}
 
-DESTDIR = bin
-OBJECTS_DIR = .obj
-MOC_DIR = .moc
 
 SOURCES += src/main.cpp \
     src/trackStorage.cpp \

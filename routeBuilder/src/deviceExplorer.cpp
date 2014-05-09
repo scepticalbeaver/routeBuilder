@@ -44,7 +44,7 @@ void DeviceExplorer::reinitDevices()
 	mMotorsComplect->clear();
 
 	float const epsilon = 5;
-	foreach (QString const &motorPort, mBrickContainer.motorPorts(Motor::powerMotor))
+	foreach (QString const &motorPort, mBrickContainer.powerMotorPorts())
 	{
 		MotorWrap *curMotor = mBrickContainer.motor(motorPort);
 		resetEncoders();

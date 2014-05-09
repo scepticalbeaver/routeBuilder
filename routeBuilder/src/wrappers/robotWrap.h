@@ -15,14 +15,12 @@ public:
 	explicit RobotWrapper(QThread *guiThread);
 	~RobotWrapper();
 
-
 public slots:
 	/// Retruns list of ports for motors of a given type.
-	QStringList motorPorts(trikControl::Motor::Type type) const;
+	QStringList powerMotorPorts() const;
 
 	/// Retruns list of ports for encoders
 	QStringList encoderPorts() const;
-
 
 	/// Returns reference to motor of a given type on a given port
 	MotorWrap *motor(QString const &port);
@@ -35,7 +33,10 @@ protected:
 	trikControl::Brick *mBrick;
 	emulators::BrickEmulator *mBrickEmulator;
 
-	QHash<QString, MotorWrap *> mRealMotorWrappers;
-	QHash<QString, EncoderWrap *> mRealEncoderWrappers;
+	QHash<QString, MotorWrap *> mMotorWrappers;
+	QHash<QString, EncoderWrap *> mEncoderWrappers;
+
+	void wrapRealDevices();
+	void wrapEmulators();
 };
 

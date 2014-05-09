@@ -1,12 +1,11 @@
 #pragma once
 
-#include <QtCore/QString>
 #include <QtCore/QThread>
 #include <QtCore/QHash>
 #include <QtCore/QStringList>
 
-#include "../routeBuilder/src/wrappers/motorWrap.h"
-#include "../routeBuilder/src/wrappers/encoderWrap.h"
+#include "motorEmulator.h"
+#include "encoderEmulator.h"
 
 namespace emulators
 {
@@ -20,21 +19,21 @@ public:
 
 public slots:
 	/// Retruns list of ports for motors of a given type.
-	QStringList motorPorts(trikControl::Motor::Type type) const;
+	QStringList motorPorts() const;
 
 	/// Retruns list of ports for encoder
 	QStringList encoderPorts() const;
 
 	/// Returns reference to motor of a given type on a given port
-	MotorWrap *motor(QString const &port);
+	MotorEmulator *motor(QString const &port);
 
 	/// Returns reference to encoder on given port.
-	EncoderWrap *encoder(QString const &port);
+	EncoderEmulator *encoder(QString const &port);
 
 private:
 	int const mMotorDevicesCount;
-	QHash<QString, MotorWrap *> mPowerMotors;
-	QHash<QString, EncoderWrap *> mEncoders;
+	QHash<QString, MotorEmulator *> mPowerMotors;
+	QHash<QString, EncoderEmulator *> mEncoders;
 	QList<MotorDevice *> mMotorDevices;
 };
 

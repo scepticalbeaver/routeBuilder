@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../../trikRuntime/trikControl/include/trikControl/motor.h"
-#include "../../../emulatorTest/motorDevice.h"
+#include "../../../emulatorTest/motorEmulator.h"
 
 //! @class MotorWrap is a container for motor of real or emulation type
 class  MotorWrap : public QObject
@@ -9,7 +9,7 @@ class  MotorWrap : public QObject
 	Q_OBJECT
 public:
 	explicit MotorWrap(trikControl::Motor *motor);
-	explicit MotorWrap(emulators::MotorDevice *motor);
+	explicit MotorWrap(emulators::MotorEmulator *motor);
 
 	~MotorWrap() {}
 
@@ -23,6 +23,6 @@ public slots:
 protected:
 	bool const mHasRealDevice;
 	trikControl::Motor *mRealMotor;
-	emulators::MotorDevice *mMotorEmulator;
+	emulators::MotorEmulator *mMotorEmulator;
 };
 

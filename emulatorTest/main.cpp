@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 	motor.setPower(70);
 	QObject::connect(&timer, SIGNAL(timeout()), &motor, SLOT(readEncoder()));
 
-	timer.start(1000);
+	timer.start(500);
 
 	return app.exec();
 }

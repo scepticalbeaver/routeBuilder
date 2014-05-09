@@ -26,7 +26,6 @@ void MotorDevice::resetEncoder()
 
 float MotorDevice::readEncoder() const
 {
-	qDebug() << mEncoderValue;
 	return mEncoderValue;
 }
 
@@ -35,7 +34,7 @@ void MotorDevice::setPower(int const &value)
 	int const maxPower = 100;
 	int newValue = qMin(qMax(value, -maxPower), maxPower);
 
-	mDestSpeed = (newValue / maxPower) * maxSpeed;
+	mDestSpeed = ((double)newValue / maxPower) * maxSpeed;
 
 	if (!mUpdater.isActive())
 	{
@@ -50,12 +49,11 @@ int MotorDevice::power() const
 
 void MotorDevice::adjustSpeed()
 {
-	double const accPerTick = accelerate *  (this->timeout / 1000);
+	double const accPerTick = accelerate *  ((double)this->timeout / 1000);
 
 	if (qAbs(mSpeed - mDestSpeed) < (accPerTick / 2))
 	{
 		mSpeed = mDestSpeed;
-		mUpdater.stop();
 		return;
 	}
 
@@ -69,5 +67,5 @@ void MotorDevice::updateState()
 		adjustSpeed();
 	}
 
-	mEncoderValue += encPerRound * (mSpeed * (this->timeout / 1000)) / roundLength();
+	mEncoderValue += encPerRound * (mSpeed * ((double)this->timeout / 1000)) / roundLength();
 }

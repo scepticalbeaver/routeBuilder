@@ -8,7 +8,7 @@ MotorWrap::MotorWrap(trikControl::Motor *motor)
 {
 }
 
-MotorWrap::MotorWrap(emulators::MotorDevice *motor)
+MotorWrap::MotorWrap(emulators::MotorEmulator *motor)
 	: QObject(motor)
 	, mHasRealDevice(false)
 	, mRealMotor(nullptr)

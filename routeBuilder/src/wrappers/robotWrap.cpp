@@ -9,26 +9,14 @@ RobotWrapper::RobotWrapper(QThread *guiThread)
 		mBrick = new trikControl::Brick((*guiThread), "./");
 		mBrickEmulator = nullptr;
 
-		QStringList encoders;
-		encoders << "JB1" << "JB2" << "JB3" << "JB4" << "JM1" << "JM2" << "JM3" << "M1";
-
-		foreach (QString const &encPort, encoders)
-		{
-			if (mBrick->encoder(encPort) != nullptr)
-			{
-				mRealEncoderWrappers.insert(encPort, new EncoderWrap(mBrick->encoder(encPort)));
-			}
-		}
-
-		foreach (QString const &motorPort, mBrick->motorPorts(trikControl::Motor::powerMotor))
-		{
-			mRealMotorWrappers.insert(motorPort, new MotorWrap(mBrick->motor(motorPort)));
-		}
+		wrapRealDevices();
 	}
 	else
 	{
 		mBrickEmulator = new emulators::BrickEmulator();
 		mBrick = nullptr;
+
+		wrapEmulators();
 	}
 }
 
@@ -44,50 +32,53 @@ RobotWrapper::~RobotWrapper()
 	}
 }
 
-QStringList RobotWrapper::motorPorts(trikControl::Motor::Type type) const
+void RobotWrapper::wrapRealDevices()
 {
-	if (mHasRealRobot)
+	QStringList encoders;
+	encoders << "JB1" << "JB2" << "JB3" << "JB4" << "JM1" << "JM2" << "JM3" << "M1";
+
+	foreach (QString const &encPort, encoders)
 	{
-		return mRealMotorWrappers.keys();
+		if (mBrick->encoder(encPort) != nullptr)
+		{
+			mEncoderWrappers.insert(encPort, new EncoderWrap(mBrick->encoder(encPort)));
+		}
 	}
-	else
+
+	foreach (QString const &motorPort, mBrick->motorPorts(trikControl::Motor::powerMotor))
 	{
-		return mBrickEmulator->motorPorts(type);
+		mMotorWrappers.insert(motorPort, new MotorWrap(mBrick->motor(motorPort)));
 	}
+}
+
+void RobotWrapper::wrapEmulators()
+{
+	foreach (QString const &encPort, mBrickEmulator->encoderPorts())
+	{
+		mEncoderWrappers.insert(encPort, new EncoderWrap(mBrickEmulator->encoder(encPort)));
+	}
+	foreach (QString const &motorPort, mBrickEmulator->motorPorts())
+	{
+		mMotorWrappers.insert(motorPort, new MotorWrap(mBrickEmulator->motor(motorPort)));
+	}
+}
+
+QStringList RobotWrapper::powerMotorPorts() const
+{
+	return mMotorWrappers.keys();
 }
 
 QStringList RobotWrapper::encoderPorts() const
 {
-	if (mHasRealRobot)
-	{
-		return mRealEncoderWrappers.keys();
-	}
-	else
-	{
-		return mBrickEmulator->encoderPorts();
-	}
+	return mEncoderWrappers.keys();
 }
 
 MotorWrap *RobotWrapper::motor(QString const &port)
 {
-	if (mHasRealRobot)
-	{
-		return mRealMotorWrappers.value(port, nullptr);
-	}
-	else
-	{
-		return mBrickEmulator->motor(port);
-	}
+	return mMotorWrappers.value(port, nullptr);
 }
 
 EncoderWrap *RobotWrapper::encoder(QString const &port)
 {
-	if (mHasRealRobot)
-	{
-		return mRealEncoderWrappers.value(port, nullptr);
-	}
-	else
-	{
-		return mBrickEmulator->encoder(port);
-	}
+	return mEncoderWrappers.value(port, nullptr);
 }
