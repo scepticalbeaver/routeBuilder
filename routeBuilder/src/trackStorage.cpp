@@ -43,11 +43,11 @@ void TrackStorage::saveTraceToFile()
 	QFile file(filename);
 	if (!file.open(QFile::WriteOnly))
 	{
-		qDebug() << "could not create file";
+		qDebug() << "--could not create file";
 		return;
 	}
 
-	QString firstLine = "encoders data, wheels\' id: ";
+	QString firstLine = "devs\' count: " + QString::number(mTrackLog.size()) + "\tIDs:\t";
 	foreach (int id, mTrackLog.keys())
 	{
 		firstLine += QString::number(id) + "\t";
@@ -65,6 +65,7 @@ void TrackStorage::saveTraceToFile()
 		}
 		line += "\n";
 		file.write(line.toUtf8());
+		line = "";
 	}
 	file.flush();
 	file.close();
@@ -73,10 +74,7 @@ void TrackStorage::saveTraceToFile()
 
 void TrackStorage::clearTrackLog()
 {
-	foreach (QVector<float> *vector, mTrackLog.values())
-	{
-		delete vector;
-	}
+	qDeleteAll(mTrackLog.values());
 
 	foreach (MotorComplect *motor, (*mMotorComplects))
 	{
@@ -86,21 +84,22 @@ void TrackStorage::clearTrackLog()
 
 void TrackStorage::trace()
 {
-	bool hasChange = false;
-	if (!isFirstCapture)
+	bool hasChanges = false;
+
+	if (isFirstCapture)
 	{
-		foreach (MotorComplect *motor, (*mMotorComplects))
-		{
-			hasChange = hasChange || (qAbs(motor->readEncoder() - mTrackLog.value(motor->id())->last()) > epsilon);
-		}
+		hasChanges = true;
+		isFirstCapture = false;
 	}
 	else
 	{
-		hasChange = true;
-		isFirstCapture = false;
+		foreach (MotorComplect *motor, (*mMotorComplects))
+		{
+			hasChanges = hasChanges || (qAbs(motor->readEncoder() - mTrackLog.value(motor->id())->last()) > epsilon);
+		}
 	}
 
-	if (!hasChange)
+	if (!hasChanges)
 	{
 		return;
 	}

@@ -40,6 +40,7 @@ protected:
 
 	void turnPowerMotors(int const power);
 	void checkRAII();
+	void resetEncoders();
 
 protected slots:
 	void playbackStopped();

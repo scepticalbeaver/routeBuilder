@@ -23,7 +23,7 @@ public slots:
 
 protected:
 	static int const timeout = 500; //ms
-	float const epsilon = 3;
+	float const epsilon = 20;
 
 	QTimer mWatcher;
 	QVector<MotorComplect *> *mMotorComplects;

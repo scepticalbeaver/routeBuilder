@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtCore/QObject>
+#include <QtGui/QApplication>
 #include <QtCore/QThread>
 
 #include <iostream>

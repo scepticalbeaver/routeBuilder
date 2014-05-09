@@ -6,10 +6,10 @@ using std::endl;
 
 InteractiveCommander::InteractiveCommander(QThread *guiThread, RobotType robotType)
 {
+	qDebug() << "-- gui thread:\t" << guiThread;
 	mRouteController = new RouteController((robotType == realConnection)? guiThread : nullptr);
 	mAlternativeThread = new QThread(this);
 	mRouteController->moveToThread(mAlternativeThread);
-	mRouteController->afterThreadInit();
 	mAlternativeThread->start();
 	initConnections();
 }
@@ -17,6 +17,7 @@ InteractiveCommander::InteractiveCommander(QThread *guiThread, RobotType robotTy
 InteractiveCommander::~InteractiveCommander()
 {
 	stopAuxThread();
+	delete mRouteController;
 	delete mAlternativeThread;
 }
 
@@ -33,7 +34,7 @@ void InteractiveCommander::initConnections()
 	connect(this, SIGNAL(initDevicesRequest()), mRouteController, SLOT(initDevices()), Qt::QueuedConnection);
 	connect(this, SIGNAL(playbackRequested()), mRouteController, SLOT(playback()), Qt::QueuedConnection);
 	connect(this, SIGNAL(checkingDevice()), mRouteController, SLOT(checkLoadedDevices()), Qt::QueuedConnection);
-	connect(mRouteController, SIGNAL(jobDone(bool)), SLOT(routeActionFinished(bool)));
+	connect(mRouteController, SIGNAL(jobDone(bool)), SLOT(routeActionFinished(bool)), Qt::QueuedConnection);
 }
 
 void InteractiveCommander::loopRound()
@@ -68,6 +69,7 @@ void InteractiveCommander::loopRound()
 		break;
 	case 0:
 		stopAuxThread();
+		QApplication::quit();
 		break;
 	}
 }
@@ -120,7 +122,7 @@ void InteractiveCommander::stopAuxThread()
 	int const timeoutMSec = 500;
 	if (mAlternativeThread->isRunning())
 	{
-		mAlternativeThread->terminate();
+		mAlternativeThread->quit();
 		mAlternativeThread->wait(timeoutMSec);
 	}
 }

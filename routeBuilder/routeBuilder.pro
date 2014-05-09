@@ -16,7 +16,6 @@ CONFIG -= app_bundle
 CONFIG += qt
 QMAKE_CXXFLAGS += -std=c++11
 
-
 TARGET = routeBuilder
 
 INCLUDEPATH = \
@@ -25,7 +24,7 @@ INCLUDEPATH = \
 	$$EMULATORS_DIR \
 	$$TRIKCONTROL_DIR/include \
 
-#LIBS += -L$$TRIKCONTROL_BINDIR -ltrikControl
+#LIBS += -L$$EMULATORS_BINDIR -lemtest -L$$TRIKCONTROL_BINDIR -ltrikControl
 LIBS += -L$$EMULATORS_BINDIR -lemtest -L$$TRIKCONTROL_BINDIR -ltrikControl-x86-d
 
 !macx {

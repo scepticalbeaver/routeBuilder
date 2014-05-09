@@ -11,7 +11,7 @@ TARGET = emtest
 
 include(../globals.pri)
 
-SOURCES += \#main.cpp \
+SOURCES += \
     motorDevice.cpp \
     brickEmulator.cpp \
     motorEmulator.cpp \

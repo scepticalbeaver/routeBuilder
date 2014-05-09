@@ -7,8 +7,8 @@ RouteController::RouteController(QThread *guiThread)
 	, mDeviceInfo(nullptr)
 	, mStorage(nullptr)
 	, mRouteRepeater(nullptr)
+	, mMotorsComplect(nullptr)
 {
-	qDebug() << "-- gui thread " << guiThread;
 }
 
 RouteController::~RouteController()
@@ -54,9 +54,18 @@ void RouteController::checkRAII()
 	afterThreadInit();
 }
 
+void RouteController::resetEncoders()
+{
+	foreach (MotorComplect *motor, (*mMotorsComplect))
+	{
+		motor->resetEncoder();
+	}
+}
+
 void RouteController::startTracking()
 {
 	checkRAII();
+	resetEncoders();
 	mStorage->startRecording();
 	emit jobDone(true);
 }
@@ -71,6 +80,7 @@ void RouteController::stopTracking()
 void RouteController::playback()
 {
 	checkRAII();
+	resetEncoders();
 	mRouteRepeater->playback();
 }
 
