@@ -2,7 +2,7 @@
 
 using namespace trikControl;
 
-MotorComplect::MotorComplect(int const &complectID, Motor *motor, Encoder *motorEncoder, bool const &isReversed)
+MotorComplect::MotorComplect(int const &complectID, MotorWrap *motor, EncoderWrap *motorEncoder, bool const &isReversed)
 	: mMotor(motor)
 	, mEncoder(motorEncoder)
 	, mPower(0)

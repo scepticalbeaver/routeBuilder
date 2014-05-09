@@ -6,11 +6,11 @@ int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 
-    InteractiveCommander commander(app.thread());
-    QTimer timer;
-    int const startTime = 256;
-    timer.singleShot(startTime, &commander, SLOT(start()));
+	InteractiveCommander commander(app.thread(), InteractiveCommander::emulation);
+	QTimer timer;
+	int const startTime = 256;
+	timer.singleShot(startTime, &commander, SLOT(start()));
 
-    return app.exec();
+	return app.exec();
 }
 

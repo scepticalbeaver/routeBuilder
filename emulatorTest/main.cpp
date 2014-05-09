@@ -1,14 +1,14 @@
-#include <QtGui/QApplication>
+#include <QCoreApplication>
 #include <QObject>
 
 #include "motorDevice.h"
 
 int main(int argc, char *argv[])
 {
-	QApplication app(argc, argv);
+	QCoreApplication app(argc, argv);
 
 	QTimer timer;
-	tests::MotorDevice motor;
+	emulators::MotorDevice motor;
 
 	motor.setPower(70);
 	QObject::connect(&timer, SIGNAL(timeout()), &motor, SLOT(readEncoder()));

@@ -7,6 +7,7 @@
 #include <QDebug>
 
 #include "motorComplect.h"
+#include "wrappers/robotWrap.h"
 
 //! @class DeviceExplorer stores in QSettings all MotorComplects
 //! provide initialization, saving and restoring device configuration
@@ -26,7 +27,7 @@ public:
 	bool hasValidConfig() const;
 
 protected:
-	trikControl::Brick mBrick;
+	RobotWrapper mBrickContainer;
 	QVector<MotorComplect *> *mMotorsComplect;
 	QSettings *mDeviceInfo;
 	bool mHasSavedInfo;
@@ -35,7 +36,7 @@ protected:
 	void saveDevicesInfo();
 	void saveDevice(MotorComplect const *complect);
 	void sleep(unsigned int const &msec);
-	void warmUpEngine(trikControl::Motor *motor);
+	void warmUpEngine(MotorWrap *motor);
 	void resetEncoders();
 
 	QMap<trikControl::Encoder *, QString> encoders();

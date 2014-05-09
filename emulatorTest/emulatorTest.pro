@@ -14,15 +14,10 @@ OBJECTS_DIR = .obj
 MOC_DIR = .moc
 
 SOURCES += main.cpp \
-    brickEmulator.cpp \
-    motor.cpp \
-    encoder.cpp \
-    motorDevice.cpp
+    motorDevice.cpp \
+    brickEmulator.cpp
 
 HEADERS += \
-    brickEmulator.h \
-    motor.h \
-    encoder.h \
-    motorDevice.h
-
+    motorDevice.h \
+    brickEmulator.h
 

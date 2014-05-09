@@ -43,7 +43,7 @@ void RouteRepeater::moveToNextPoint()
 	int nextPosition = mHistoryPointer;
 	float curValue = 0;
 	int motorID = 0;
-	foreach (MotorComplect* motor, mMotorComplects->values())
+	foreach (MotorComplect *motor, mMotorComplects->values())
 	{
 		motorID = motor->id();
 		curValue = motor->readEncoder();

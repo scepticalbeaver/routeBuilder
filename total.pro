@@ -1,8 +1,10 @@
 TEMPLATE = subdirs
 SUBDIRS = \
     routeBuilder \
-    tests
+    emulatorTest
 
-emtest.file = tests/tests.pro
 routeBuilder.file = routeBuilder/routeBuilder.pro
+emtest.file = emulatorTest/emulatorTest.pro
+emtest.depends = routeBuilder
+
 

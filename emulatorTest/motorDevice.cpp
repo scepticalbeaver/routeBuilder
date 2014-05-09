@@ -1,6 +1,6 @@
 #include "motorDevice.h"
 
-using namespace tests;
+using namespace emulators;
 
 MotorDevice::MotorDevice(QObject *parent)
 	: QObject(parent)
@@ -41,6 +41,11 @@ void MotorDevice::setPower(int const &value)
 	{
 		mUpdater.start(this->timeout);
 	}
+}
+
+int MotorDevice::power() const
+{
+	return mPower;
 }
 
 void MotorDevice::adjustSpeed()

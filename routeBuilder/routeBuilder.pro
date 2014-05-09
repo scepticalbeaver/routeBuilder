@@ -36,13 +36,19 @@ SOURCES += src/main.cpp \
     src/routeController.cpp \
     src/routeRepeater.cpp \
     src/motorComplect.cpp \
-    src/deviceExplorer.cpp
- 
+    src/deviceExplorer.cpp \
+    src/wrappers/motorWrap.cpp \
+    src/wrappers/encoderWrap.cpp \
+    src/wrappers/robotWrap.cpp
+
 HEADERS += \
     src/trackStorage.h \
     src/interactiveCommander.h \
     src/routeController.h \
     src/routeRepeater.h \
     src/motorComplect.h \
-    src/deviceExplorer.h
-    
+    src/deviceExplorer.h \
+    src/wrappers/motorWrap.h \
+    src/wrappers/encoderWrap.h \
+    src/wrappers/robotWrap.h
+

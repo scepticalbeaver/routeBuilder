@@ -21,7 +21,7 @@ public:
 
 DeviceExplorer::DeviceExplorer(QThread *guiThread, QVector<MotorComplect *> *complects, QObject *parent)
 	: QObject(parent)
-	, mBrick(*guiThread, "./")
+	, mBrickContainer(guiThread)
 	, mMotorsComplect(complects)
 	, mHasSavedInfo(false)
 {
@@ -33,6 +33,8 @@ DeviceExplorer::DeviceExplorer(QThread *guiThread, QVector<MotorComplect *> *com
 
 DeviceExplorer::~DeviceExplorer()
 {
+	qDeleteAll(*mMotorsComplect);
+	mMotorsComplect->clear();
 	mDeviceInfo->sync();
 }
 
@@ -42,17 +44,17 @@ void DeviceExplorer::reinitDevices()
 	mMotorsComplect->clear();
 
 	float const epsilon = 5;
-	foreach (QString const &motorPort, mBrick.motorPorts(Motor::powerMotor))
+	foreach (QString const &motorPort, mBrickContainer.motorPorts(Motor::powerMotor))
 	{
-		Motor *curMotor = mBrick.motor(motorPort);
+		MotorWrap *curMotor = mBrickContainer.motor(motorPort);
 		resetEncoders();
 		warmUpEngine(curMotor);
 
 		float max = 0;
-		Encoder *machedEncoder = nullptr;
-		foreach(Encoder *encoder, encoders().keys())
+		QString matchedEncoder;
+		foreach(QString const &encoderPort, mBrickContainer.encoderPorts())
 		{
-			float absValue = qAbs(encoder->read());
+			float absValue = qAbs(mBrickContainer.encoder(encoderPort)->read());
 
 			if (absValue < epsilon)
 			{
@@ -61,22 +63,23 @@ void DeviceExplorer::reinitDevices()
 			if (absValue > max)
 			{
 				max = absValue;
-				machedEncoder = encoder;
+				matchedEncoder = encoderPort;
 			}
 		}
-		if (machedEncoder != nullptr)
+
+		if (!matchedEncoder.isEmpty())
 		{
-			qDebug() << "(motor, encoder) = " << motorPort << " " << encoders().value(machedEncoder);
-			bool const isReversed = machedEncoder->read() < 0;
+			qDebug() << "(motor, encoder) = " << motorPort << " " << matchedEncoder;
+			bool const isReversed = mBrickContainer.encoder(matchedEncoder)->read() < 0;
 			qDebug() << "reversed?" << isReversed;
 
 			mMotorsComplect->append(new MotorComplect(
 					mMotorsComplect->size()
 					, curMotor
-					, machedEncoder
+					, mBrickContainer.encoder(matchedEncoder)
 					, isReversed
 					));
-			mMotorsComplect->last()->setOrigins(motorPort, encoders().value(machedEncoder));
+			mMotorsComplect->last()->setOrigins(motorPort, matchedEncoder);
 		}
 	}
 	qDebug() << "motors founded: " << mMotorsComplect->size();
@@ -95,20 +98,21 @@ void DeviceExplorer::loadDeviceConfiguration()
 	{
 		return;
 	}
+
 	mMotorsComplect->clear();
 
 	bool isDeviceConfigChanged = false;
 	QString motorPort;
 	QString encoderPort;
-	foreach (QString groupId, mDeviceInfo->childGroups())
+	foreach (QString const &groupId, mDeviceInfo->childGroups())
 	{
 		mDeviceInfo->beginGroup(groupId);
 		motorPort = mDeviceInfo->value(SettingsKeys::motorPort()).toString();
 		encoderPort = mDeviceInfo->value(SettingsKeys::encoderPort()).toString();
 		bool const isReversed = mDeviceInfo->value(SettingsKeys::isReversed()).toBool();
 		mDeviceInfo->endGroup();
-		Motor *motor = mBrick.motor(motorPort);
-		Encoder *encoder = mBrick.encoder(encoderPort);
+		MotorWrap *motor = mBrickContainer.motor(motorPort);
+		EncoderWrap *encoder = mBrickContainer.encoder(encoderPort);
 		if (motor == nullptr || encoder == nullptr)
 		{
 			isDeviceConfigChanged = true;
@@ -155,9 +159,9 @@ void DeviceExplorer::sleep(unsigned int const &msec)
 	loop.exec();
 }
 
-void DeviceExplorer::warmUpEngine(Motor *motor)
+void DeviceExplorer::warmUpEngine(MotorWrap *motor)
 {
-	int const testPower = 60;
+	int testPower = 60;
 	motor->setPower(testPower);
 	sleep(500);
 	motor->setPower(0);
@@ -165,25 +169,8 @@ void DeviceExplorer::warmUpEngine(Motor *motor)
 
 void DeviceExplorer::resetEncoders()
 {
-	foreach (Encoder *encoder, encoders().keys())
+	foreach (QString const &encPort, mBrickContainer.encoderPorts())
 	{
-		encoder->reset();
+		mBrickContainer.encoder(encPort)->reset();
 	}
-}
-
-QMap<Encoder *, QString> DeviceExplorer::encoders()
-{
-	QMap<Encoder *, QString> result;
-	QStringList encoders;
-	encoders << "JB1" << "JB2" << "JB3" << "JB4" << "JM1" << "JM2" << "JM3" << "M1";
-
-	foreach (QString const &ePort, encoders)
-	{
-		Encoder *encoder = mBrick.encoder(ePort);
-		if (encoder != nullptr)
-		{
-			result.insert(encoder, ePort);
-		}
-	}
-	return result;
 }

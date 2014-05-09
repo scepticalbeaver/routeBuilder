@@ -11,7 +11,13 @@ class InteractiveCommander : public QObject
 {
 	Q_OBJECT
 public:
-	InteractiveCommander(QThread *guiThread, QObject *parent = 0);
+	enum RobotType
+	{
+		realConnection
+		, emulation
+	};
+
+	InteractiveCommander(QThread *guiThread, RobotType robotType);
 	~InteractiveCommander();
 
 public slots:
@@ -26,7 +32,6 @@ signals:
 	void checkingDevice();
 
 protected:
-	QThread *mGuiThread;
 	RouteController *mRouteController;
 	QThread *mAlternativeThread;
 

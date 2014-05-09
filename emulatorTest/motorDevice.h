@@ -5,7 +5,7 @@
 
 #include <QDebug>
 
-namespace tests
+namespace emulators
 {
 class MotorDevice : public QObject
 {
@@ -20,6 +20,7 @@ public slots:
 	float readEncoder() const;
 
 	void setPower(int const &value);
+	int power() const;
 
 protected:
 	static int const timeout = 10;

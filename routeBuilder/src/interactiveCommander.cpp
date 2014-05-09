@@ -4,11 +4,9 @@ using std::cin;
 using std::cout;
 using std::endl;
 
-InteractiveCommander::InteractiveCommander(QThread *guiThread, QObject *parent)
-	: QObject(parent)
-	, mGuiThread(guiThread)
+InteractiveCommander::InteractiveCommander(QThread *guiThread, RobotType robotType)
 {
-	mRouteController = new RouteController(mGuiThread);
+	mRouteController = new RouteController((robotType == realConnection)? guiThread : nullptr);
 	mAlternativeThread = new QThread(this);
 	mRouteController->moveToThread(mAlternativeThread);
 	mRouteController->afterThreadInit();
@@ -70,7 +68,6 @@ void InteractiveCommander::loopRound()
 		break;
 	case 0:
 		stopAuxThread();
-		mGuiThread->terminate();
 		break;
 	}
 }

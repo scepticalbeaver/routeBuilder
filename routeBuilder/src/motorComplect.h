@@ -4,7 +4,8 @@
 
 #include <QDebug>
 
-#include "trikControl/brick.h"
+#include "wrappers/motorWrap.h"
+#include "wrappers/encoderWrap.h"
 
 //! @class MotorComplect is a conformity of Motor and Encoder
 class MotorComplect : public QObject
@@ -12,7 +13,7 @@ class MotorComplect : public QObject
 	Q_OBJECT
 public:
 	//! @arg complectID must be unique identificator of complect
-	MotorComplect(int const &complectID, trikControl::Motor *motor, trikControl::Encoder *motorEncoder
+	MotorComplect(int const &complectID, MotorWrap *motor, EncoderWrap *motorEncoder
 			, bool const &isReversed);
 
 	//! @return unique identificator of motor complect
@@ -42,8 +43,8 @@ protected:
 	static constexpr float encodersPerRound = 410;
 	static constexpr float maxDiffPerMS = 12 / 10;
 
-	trikControl::Motor *mMotor;
-	trikControl::Encoder *mEncoder;
+	MotorWrap *mMotor;
+	EncoderWrap *mEncoder;
 	int mPower;
 	int mIncrement;
 	int const mID;
