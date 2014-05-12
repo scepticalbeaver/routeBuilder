@@ -25,6 +25,7 @@ public slots:
 	void checkLoadedDevices();
 	void startTracking();
 	void stopTracking();
+	void loadTrackFromFile();
 	void playback();
 	void switchMotors(bool const willTurnOn);
 

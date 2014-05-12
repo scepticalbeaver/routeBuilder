@@ -32,6 +32,7 @@ void InteractiveCommander::initConnections()
 	connect(this, SIGNAL(turnMotorsRequested(bool)), mRouteController, SLOT(switchMotors(bool)), Qt::QueuedConnection);
 	connect(this, SIGNAL(initDevicesRequest()), mRouteController, SLOT(initDevices()), Qt::QueuedConnection);
 	connect(this, SIGNAL(playbackRequested()), mRouteController, SLOT(playback()), Qt::QueuedConnection);
+	connect(this, SIGNAL(loadTraceFromFile()), mRouteController, SLOT(loadTrackFromFile()), Qt::QueuedConnection);
 	connect(this, SIGNAL(checkingDevice()), mRouteController, SLOT(checkLoadedDevices()), Qt::QueuedConnection);
 	connect(mRouteController, SIGNAL(jobDone(bool)), SLOT(routeActionFinished(bool)), Qt::QueuedConnection);
 }
@@ -61,9 +62,12 @@ void InteractiveCommander::loopRound()
 		startPlayback();
 		break;
 	case 6:
-		switchMotors(true);
+		emit loadTraceFromFile();
 		break;
 	case 7:
+		switchMotors(true);
+		break;
+	case 8:
 		switchMotors(false);
 		break;
 	case 0:
@@ -81,8 +85,9 @@ void InteractiveCommander::printRoundMsg()
 			<< "3) start tracking\n"
 			<< "4) stop tracking\n"
 			<< "5) repeat track\n"
-			<< "6) turn on motors\n"
-			<< "7) stop motors\n"
+			<< "6) load track from \"data.txt\" file\n"
+			<< "7) turn on motors\n"
+			<< "8) stop motors\n"
 			<< "0) exit program\n> ";
 }
 

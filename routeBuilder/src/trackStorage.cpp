@@ -4,27 +4,79 @@ TrackStorage::TrackStorage(QVector<MotorComplect *> *array, QObject *parent)
 	: QObject(parent)
 	, mMotorComplects(array)
 	, isFirstCapture(true)
+	, mRecordingFlow(isNotRecordingAny)
 {
 	connect(&mWatcher, SIGNAL(timeout()), SLOT(trace()));
 }
 
 TrackStorage::~TrackStorage()
 {
-	foreach (QVector<float> *vector, mTrackLog.values())
+	qDeleteAll(mTrackLog.values());
+}
+
+QVector<float>* TrackStorage::motorTrace(int const &id, int const &trackFlow) const
+{
+	return mTrackLog.value(idToFlowId(id, trackFlow));
+}
+
+bool TrackStorage::loadFromFile(QString const &filename, int const &intoTrackFlow)
+{
+	clearFlowTrackLog(intoTrackFlow);
+	QFile file(filename);
+	if (!file.open(QFile::ReadOnly))
 	{
-		delete vector;
+		qDebug() << "--could not read file " << filename;
+		return false;
 	}
+
+	QString header(file.readLine());
+	QRegExp digitsRX("(\\d+)");
+	QStringList numbers;
+	int pos = 0;
+
+	while ((pos = digitsRX.indexIn(header, pos)) != -1)
+	{
+		numbers << digitsRX.cap(1);
+		pos += digitsRX.matchedLength();
+	}
+
+	if ((numbers.first().toInt() != numbers.size() - 1))
+	{
+		qDebug() << "--File is corrupted " << filename;
+		return false;
+	}
+	numbers.removeFirst();
+
+	if (!createStorage(numbers, intoTrackFlow))
+	{
+		qDebug() << "--Motor IDs in file are corrupted " << filename;
+		return false;
+	}
+
+	while (file.canReadLine())
+	{
+		if (!appendDataLine(file.readLine(), intoTrackFlow))
+		{
+			qDebug() << "--Encoders data is corrupted in file " << filename;
+			return false;
+		}
+	}
+
+	file.close();
+	return true;
 }
 
-QVector<float>* TrackStorage::motorTrace(int const id) const
+void TrackStorage::startRecording(int const &flowNumber)
 {
-	return mTrackLog.value(id);
-}
-
-void TrackStorage::startRecording()
-{
+	if (mRecordingFlow != isNotRecordingAny)
+	{
+		qDebug() << "--Recording already turned on!";
+		return;
+	}
 	isFirstCapture = true;
-	clearTrackLog();
+	mRecordingFlow = flowNumber;
+	clearFlowTrackLog(flowNumber);
+	createStorageFromComplect(flowNumber);
 
 	mWatcher.start(timeout);
 }
@@ -32,36 +84,40 @@ void TrackStorage::startRecording()
 void TrackStorage::stopRecording()
 {
 	mWatcher.stop();
+	trace();
 	saveTraceToFile();
+	mRecordingFlow = isNotRecordingAny;
 }
 
 void TrackStorage::saveTraceToFile()
 {
-	int const count = mTrackLog.size();
-	QString filename = "mC-trace_" + QString::number(count) + "-wheels_"
+	QList<int> flowIdsList = flowIdsInFlow(mRecordingFlow);
+	int const count = flowIdsList.size();
+	QString filename = "trace-" + QString::number(mRecordingFlow) + "th-flow_on-" + QString::number(count) + "-wheels_"
 			+ QTime::currentTime().toString("hh-mm-ss-zzz") + ".log";
 	QFile file(filename);
 	if (!file.open(QFile::WriteOnly))
 	{
-		qDebug() << "--could not create file";
+		qDebug() << "--could not create file " << filename;
 		return;
 	}
 
-	QString firstLine = "devs\' count: " + QString::number(mTrackLog.size()) + "\tIDs:\t";
-	foreach (int id, mTrackLog.keys())
+
+	QString firstLine = "devs\' count: " + QString::number(flowIdsList.size()) + "\tIDs:\t";
+	foreach (int flowId, flowIdsList)
 	{
-		firstLine += QString::number(id) + "\t";
+		firstLine += QString::number(idFromFlowId(flowId)) + "\t";
 	}
 	firstLine += "\n";
 	file.write(firstLine.toUtf8());
 
-	int const dataLength = mTrackLog.values().first()->size();
+	int const dataLength = mTrackLog.value(flowIdsList.first())->size();
 	QString line("");
 	for (int i = 0; i < dataLength; i++)
 	{
-		foreach (int id, mTrackLog.keys())
+		foreach (int const &flowId, flowIdsList)
 		{
-			line += QString::number(mTrackLog.value(id)->at(i), 'f', 2) + "\t";
+			line += QString::number(mTrackLog.value(flowId)->at(i), 'f', 2) + "\t";
 		}
 		line += "\n";
 		file.write(line.toUtf8());
@@ -72,13 +128,93 @@ void TrackStorage::saveTraceToFile()
 	qDebug() << "--Trace saved to file " << filename << " with datalength: " << dataLength;
 }
 
-void TrackStorage::clearTrackLog()
+void TrackStorage::clearFlowTrackLog(int const &flowNum)
+{
+	foreach (int const &id, mTrackLog.keys())
+	{
+		if (isInFlowId(id, flowNum))
+		{
+			delete mTrackLog.value(id);
+			mTrackLog.remove(id);
+		}
+	}
+}
+
+void TrackStorage::clearAllTrackLog()
 {
 	qDeleteAll(mTrackLog.values());
+	mTrackLog.clear();
+}
 
-	foreach (MotorComplect *motor, (*mMotorComplects))
+bool TrackStorage::createStorage(QStringList const &motorIDs, int const &trackFlow)
+{
+	int curID = 0;
+	bool isGood = false;
+	foreach (QString const &id, motorIDs)
 	{
-		mTrackLog.insert(motor->id(), new QVector<float>());
+		curID = id.toInt(&isGood);
+		if (!isGood)
+		{
+			clearFlowTrackLog(trackFlow);
+			return false;
+		}
+		mTrackLog.insert(idToFlowId(curID, trackFlow), new QVector<float>());
+	}
+	return true;
+}
+
+bool TrackStorage::appendDataLine(QString const &line, int const &trackFlow)
+{
+	QRegExp digitsRX("\[\t\n]");
+	QStringList values = line.split(digitsRX, QString::SkipEmptyParts);
+	float curValue = 0;
+	bool isGoodNum = false;
+	foreach (int const &id, flowIdsInFlow(trackFlow))
+	{
+		curValue = values.takeFirst().toFloat(&isGoodNum);
+		if (!isGoodNum)
+		{
+			clearFlowTrackLog(trackFlow);
+			return false;
+		}
+		mTrackLog.value(idToFlowId(id, trackFlow))->append(curValue);
+	}
+	return true;
+}
+
+bool TrackStorage::isInFlowId(int const &id, int const &flow) const
+{
+	return (id >= flowOffset * flow && id < flowOffset * (flow + 1));
+}
+
+int TrackStorage::idToFlowId(int const &id, int const &flow) const
+{
+	return id + flowOffset * flow;
+}
+
+int TrackStorage::idFromFlowId(int const &flowId) const
+{
+	return flowId % flowOffset;
+}
+
+QList<int> TrackStorage::flowIdsInFlow(int const &flow) const
+{
+	QList<int> result;
+	foreach (int const &id, mTrackLog.keys())
+	{
+		if (isInFlowId(id, flow))
+		{
+			result << id;
+		}
+	}
+	return result;
+}
+
+void TrackStorage::createStorageFromComplect(int const &trackFlow)
+{
+	foreach (MotorComplect const *motor, (*mMotorComplects))
+	{
+		mTrackLog.insert(idToFlowId(motor->id(), trackFlow), new QVector<float>());
 	}
 }
 
@@ -95,7 +231,9 @@ void TrackStorage::trace()
 	{
 		foreach (MotorComplect *motor, (*mMotorComplects))
 		{
-			hasChanges = hasChanges || (qAbs(motor->readEncoder() - mTrackLog.value(motor->id())->last()) > epsilon);
+			hasChanges = hasChanges ||
+					(qAbs(motor->readEncoder() - mTrackLog.value(idToFlowId(motor->id(), mRecordingFlow))->last())
+					> epsilon);
 		}
 	}
 
@@ -106,7 +244,7 @@ void TrackStorage::trace()
 
 	foreach (MotorComplect *motor, (*mMotorComplects))
 	{
-		mTrackLog.value(motor->id())->append(motor->readEncoder());
+		mTrackLog.value(idToFlowId(motor->id(), mRecordingFlow))->append(motor->readEncoder());
 	}
 }
 

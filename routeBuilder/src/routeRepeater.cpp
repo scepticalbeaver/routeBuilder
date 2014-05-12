@@ -5,20 +5,24 @@ RouteRepeater::RouteRepeater(QVector<MotorComplect *> *complects, TrackStorage *
 	, mStorage(storage)
 	, mSharedComplects(complects)
 	, mHistoryPointer(0)
+	, mPlaybackFlow(keywords::TrackingFlows::mainTrackingFlow())
 {
 	connect(&mTimer, SIGNAL(timeout()), SLOT(adjustMotors()));
 }
 
-void RouteRepeater::playback()
+void RouteRepeater::playback(int const &trackFlow)
 {
 	qDebug() << "--starting playback";
 	mHistoryPointer = 0;
 	fetchMotors();
-	mHistorySize = mStorage->motorTrace(mMotorComplects.keys().first())->size();
+	mHistorySize = mStorage->motorTrace(mMotorComplects.keys().first(), trackFlow)->size();
 	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
 		motor->resetEncoder();
 	}
+
+	mStorage->startRecording(keywords::TrackingFlows::alternativeFlow());
+
 	mTimer.start(timeout);
 }
 
@@ -80,7 +84,7 @@ bool RouteRepeater::hasReverseVelocity(int const id)
 		after = mHistoryPointer;
 	}
 
-	return mStorage->motorTrace(id)->at(after) - mStorage->motorTrace(id)->at(before) < 0;
+	return mStorage->motorTrace(id, mPlaybackFlow)->at(after) - mStorage->motorTrace(id, mPlaybackFlow)->at(before) < 0;
 }
 
 bool RouteRepeater::hasReachedPosition(float const &currentPos, float const finPos, bool const &isReversed)
@@ -90,7 +94,7 @@ bool RouteRepeater::hasReachedPosition(float const &currentPos, float const finP
 
 float RouteRepeater::valueAtTimePos(int const &id, int const &pointer)
 {
-	return mStorage->motorTrace(id)->at(pointer);
+	return mStorage->motorTrace(id, mPlaybackFlow)->at(pointer);
 }
 
 void RouteRepeater::adjustMotors()
@@ -105,7 +109,7 @@ void RouteRepeater::adjustMotors()
 	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
 		curValue = motor->readEncoder();
-		curDiff = qAbs(mStorage->motorTrace(motor->id())->at(mHistoryPointer) - curValue);
+		curDiff = qAbs(mStorage->motorTrace(motor->id(), mPlaybackFlow)->at(mHistoryPointer) - curValue);
 		if (curDiff >= maxDifference)
 		{
 			maxDifference = curDiff;
@@ -130,6 +134,8 @@ void RouteRepeater::playbackStopped()
 	}
 	mTimer.stop();
 	stopMotors();
+	mStorage->stopRecording();
+
 	qDebug() << "--playback stopped";
 	qDebug() << "--motors stopped at value:";
 	foreach (MotorComplect *motor, mMotorComplects.values())

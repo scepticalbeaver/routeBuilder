@@ -58,5 +58,6 @@ HEADERS += \
     src/deviceExplorer.h \
     src/wrappers/motorWrap.h \
     src/wrappers/encoderWrap.h \
-    src/wrappers/robotWrap.h
+    src/wrappers/robotWrap.h \
+    src/keywords.h
 

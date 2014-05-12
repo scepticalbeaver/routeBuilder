@@ -11,7 +11,7 @@ public:
 	explicit RouteRepeater(QVector<MotorComplect *> *complects, TrackStorage *storage, QObject *parent = 0);
 	~RouteRepeater() {}
 
-	void playback();
+	void playback(int const &trackFlow);
 
 signals:
 	void playbackDone();
@@ -25,6 +25,7 @@ protected:
 	QTimer mTimer;
 	int mHistoryPointer;
 	int mHistorySize;
+	int mPlaybackFlow;
 
 	void initTimer();
 	void fetchMotors();

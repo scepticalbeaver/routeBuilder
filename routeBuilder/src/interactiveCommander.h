@@ -30,6 +30,7 @@ signals:
 	void initDevicesRequest();
 	void playbackRequested();
 	void checkingDevice();
+	void loadTraceFromFile();
 
 protected:
 	RouteController *mRouteController;

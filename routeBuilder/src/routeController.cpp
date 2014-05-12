@@ -1,6 +1,7 @@
 #include "routeController.h"
 
 using namespace trikControl;
+using namespace keywords;
 
 RouteController::RouteController(QThread *guiThread)
 	: mGuiThread(guiThread)
@@ -72,7 +73,7 @@ void RouteController::startTracking()
 {
 	checkRAII();
 	resetEncoders();
-	mStorage->startRecording();
+	mStorage->startRecording(TrackingFlows::mainTrackingFlow());
 	emit jobDone(true);
 }
 
@@ -83,11 +84,17 @@ void RouteController::stopTracking()
 	emit jobDone(true);
 }
 
+void RouteController::loadTrackFromFile()
+{
+	checkRAII();
+	emit jobDone(mStorage->loadFromFile(QString("data.log"), TrackingFlows::mainTrackingFlow()));
+}
+
 void RouteController::playback()
 {
 	checkRAII();
 	resetEncoders();
-	mRouteRepeater->playback();
+	mRouteRepeater->playback(TrackingFlows::mainTrackingFlow());
 }
 
 void RouteController::switchMotors(bool const willTurnOn)
