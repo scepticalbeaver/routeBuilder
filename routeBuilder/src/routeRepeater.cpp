@@ -3,26 +3,19 @@
 RouteRepeater::RouteRepeater(QVector<MotorComplect *> *complects, TrackStorage *storage, QObject *parent)
 	: QObject(parent)
 	, mStorage(storage)
+	, mSharedComplects(complects)
 	, mHistoryPointer(0)
 {
-	foreach (MotorComplect *motor, (*complects))
-	{
-		mMotorComplects->insert(motor->id(), motor);
-	}
 	connect(&mTimer, SIGNAL(timeout()), SLOT(adjustMotors()));
-}
-
-RouteRepeater::~RouteRepeater()
-{
-	stopMotors();
 }
 
 void RouteRepeater::playback()
 {
 	qDebug() << "--starting playback";
 	mHistoryPointer = 0;
-	mHistorySize = mStorage->motorTrace(mMotorComplects->keys().first())->size();
-	foreach (MotorComplect *motor, mMotorComplects->values())
+	fetchMotors();
+	mHistorySize = mStorage->motorTrace(mMotorComplects.keys().first())->size();
+	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
 		motor->resetEncoder();
 	}
@@ -31,7 +24,7 @@ void RouteRepeater::playback()
 
 void RouteRepeater::stopMotors()
 {
-	foreach (MotorComplect *motor, mMotorComplects->values())
+	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
 		motor->setMotorPower(0);
 	}
@@ -43,8 +36,12 @@ void RouteRepeater::moveToNextPoint()
 	int nextPosition = mHistoryPointer;
 	float curValue = 0;
 	int motorID = 0;
-	foreach (MotorComplect *motor, mMotorComplects->values())
+	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
+		if (nextPosition >= mHistorySize - 1)
+		{
+			break;
+		}
 		motorID = motor->id();
 		curValue = motor->readEncoder();
 		bool isReversed = hasReverseVelocity(motorID);
@@ -91,7 +88,7 @@ bool RouteRepeater::hasReachedPosition(float const &currentPos, float const finP
 	return (!isReversed && (currentPos >= finPos)) || (isReversed && (currentPos <= finPos));
 }
 
-float RouteRepeater::valueAtTimePos(const int &id, const int &pointer)
+float RouteRepeater::valueAtTimePos(int const &id, int const &pointer)
 {
 	return mStorage->motorTrace(id)->at(pointer);
 }
@@ -105,7 +102,7 @@ void RouteRepeater::adjustMotors()
 
 	float curDiff = 0;
 	float curValue = 0;
-	foreach (MotorComplect *motor, mMotorComplects->values())
+	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
 		curValue = motor->readEncoder();
 		curDiff = qAbs(mStorage->motorTrace(motor->id())->at(mHistoryPointer) - curValue);
@@ -117,7 +114,7 @@ void RouteRepeater::adjustMotors()
 	}
 
 	float properVelocity = 0;
-	foreach (MotorComplect *motor, mMotorComplects->values())
+	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
 		properVelocity = recommendVelocity * (difference.value(motor->id()) / maxDifference);
 		properVelocity = properVelocity * (hasReverseVelocity(motor->id()))? -1 : 1;
@@ -132,8 +129,22 @@ void RouteRepeater::playbackStopped()
 		return;
 	}
 	mTimer.stop();
-	qDebug() << "--playback stopped";
-
 	stopMotors();
+	qDebug() << "--playback stopped";
+	qDebug() << "--motors stopped at value:";
+	foreach (MotorComplect *motor, mMotorComplects.values())
+	{
+		qDebug() << motor->id() << "\t" << motor->readEncoder();
+	}
+
 	emit playbackDone();
+}
+
+void RouteRepeater::fetchMotors()
+{
+	mMotorComplects.clear();
+	foreach (MotorComplect *complect, (*mSharedComplects))
+	{
+		mMotorComplects.insert(complect->id(), complect);
+	}
 }

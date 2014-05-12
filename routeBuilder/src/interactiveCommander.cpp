@@ -6,7 +6,6 @@ using std::endl;
 
 InteractiveCommander::InteractiveCommander(QThread *guiThread, RobotType robotType)
 {
-	qDebug() << "-- gui thread:\t" << guiThread;
 	mRouteController = new RouteController((robotType == realConnection)? guiThread : nullptr);
 	mAlternativeThread = new QThread(this);
 	mRouteController->moveToThread(mAlternativeThread);

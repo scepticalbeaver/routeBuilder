@@ -66,6 +66,8 @@ void MotorComplect::setSpeed(float const &metersPerSecond)
 {
 	int const maxPower = 100;
 	float const expVelocity = 1.1;  //meters per second
+
+	float properPower = maxPower * (metersPerSecond / expVelocity);
 /*
 	mProperEncDiff = (metersPerSecond * (this->timeout / 1000)) / (pi * wheelDiameter) * encodersPerRound;
 
@@ -73,11 +75,9 @@ void MotorComplect::setSpeed(float const &metersPerSecond)
 
 	float properPower = (mProperEncDiff / encMaxDiff) * maxPower;
 */
-	float properPower = maxPower * (metersPerSecond / expVelocity);
-	properPower = qMin(properPower, 100.0f);
+
+	properPower = qMax(qMin(properPower, 100.0f), -100.0f);
 	setMotorPower(int(properPower));
-
-
 
 	if (qAbs(metersPerSecond) >= 0.001)
 	{

@@ -4,7 +4,7 @@
 
 namespace emulators
 {
-class EncoderEmulator : public QObject
+class Q_DECL_EXPORT EncoderEmulator : public QObject
 {
 	Q_OBJECT
 public:

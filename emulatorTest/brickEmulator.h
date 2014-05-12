@@ -9,7 +9,7 @@
 
 namespace emulators
 {
-class BrickEmulator : public QObject
+class Q_DECL_EXPORT BrickEmulator : public QObject
 {
 	Q_OBJECT
 public:

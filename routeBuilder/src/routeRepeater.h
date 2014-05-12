@@ -9,7 +9,7 @@ class RouteRepeater : public QObject
 	Q_OBJECT
 public:
 	explicit RouteRepeater(QVector<MotorComplect *> *complects, TrackStorage *storage, QObject *parent = 0);
-	~RouteRepeater();
+	~RouteRepeater() {}
 
 	void playback();
 
@@ -20,12 +20,14 @@ protected:
 	static int const timeout = 50; //ms
 	static float constexpr recommendVelocity = 0.4; // meters per sec
 	TrackStorage *mStorage;
-	QMap<int, MotorComplect *> *mMotorComplects;
+	QVector<MotorComplect *> *mSharedComplects;
+	QMap<int, MotorComplect *> mMotorComplects;
 	QTimer mTimer;
 	int mHistoryPointer;
 	int mHistorySize;
 
 	void initTimer();
+	void fetchMotors();
 	void stopMotors();
 	void moveToNextPoint();
 	bool hasReverseVelocity(int const id);

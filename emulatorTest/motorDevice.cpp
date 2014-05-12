@@ -8,6 +8,7 @@ MotorDevice::MotorDevice(QObject *parent)
 	, mEncoderValue(0)
 	, mDestSpeed(0)
 	, mSpeed(0)
+	, mDeviation((qrand() % 10) / 10.0)
 {
 	connect(&mUpdater, SIGNAL(timeout()), SLOT(updateState()));
 	mUpdater.start(this->timeout);
@@ -31,6 +32,7 @@ float MotorDevice::readEncoder() const
 
 void MotorDevice::setPower(int const &value)
 {
+	double const maxSpeed = maxSpeedAbs - mDeviation;
 	int const maxPower = 100;
 	int newValue = qMin(qMax(value, -maxPower), maxPower);
 

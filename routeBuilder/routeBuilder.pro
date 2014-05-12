@@ -18,6 +18,7 @@ QMAKE_CXXFLAGS += -std=c++11
 
 TARGET = routeBuilder
 
+DEPENDPATH += . $$EMULATORS_DIR
 INCLUDEPATH = \
 	$$PWD \
 	$$BOOST_DIR \

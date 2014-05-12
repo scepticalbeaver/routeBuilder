@@ -69,7 +69,7 @@ void TrackStorage::saveTraceToFile()
 	}
 	file.flush();
 	file.close();
-	qDebug() << "Trace saved to file \"" << filename << "\" with datalength: " << dataLength;
+	qDebug() << "--Trace saved to file " << filename << " with datalength: " << dataLength;
 }
 
 void TrackStorage::clearTrackLog()

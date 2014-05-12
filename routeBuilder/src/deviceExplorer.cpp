@@ -28,13 +28,11 @@ DeviceExplorer::DeviceExplorer(QThread *guiThread, QVector<MotorComplect *> *com
 	QString settingsFile = "deviceInfo.ini";
 	mDeviceInfo = new QSettings(settingsFile, QSettings::IniFormat, this);
 
-	//loadDeviceConfiguration();
+	loadDeviceConfiguration();
 }
 
 DeviceExplorer::~DeviceExplorer()
 {
-	qDeleteAll(*mMotorsComplect);
-	mMotorsComplect->clear();
 	mDeviceInfo->sync();
 }
 
@@ -69,9 +67,9 @@ void DeviceExplorer::reinitDevices()
 
 		if (!matchedEncoder.isEmpty())
 		{
-			qDebug() << "(motor, encoder) = " << motorPort << " " << matchedEncoder;
+			qDebug() << "--(motor, encoder) = " << motorPort << " " << matchedEncoder;
 			bool const isReversed = mBrickContainer.encoder(matchedEncoder)->read() < 0;
-			qDebug() << "reversed?" << isReversed;
+			qDebug() << "--reversed?" << isReversed;
 
 			mMotorsComplect->append(new MotorComplect(
 					mMotorsComplect->size()
@@ -82,7 +80,7 @@ void DeviceExplorer::reinitDevices()
 			mMotorsComplect->last()->setOrigins(motorPort, matchedEncoder);
 		}
 	}
-	qDebug() << "motors founded: " << mMotorsComplect->size();
+	qDebug() << "--motors founded: " << mMotorsComplect->size();
 	saveDevicesInfo();
 }
 
@@ -124,14 +122,14 @@ void DeviceExplorer::loadDeviceConfiguration()
 
 	if (isDeviceConfigChanged)
 	{
-		qDebug() << "device configuration was changed. Make reinit!";
+		qDebug() << "--device configuration was changed. Make reinit!";
 		qDeleteAll(*mMotorsComplect);
 		mMotorsComplect->clear();
 		mHasSavedInfo = false;
 		return;
 	}
 
-	qDebug() << "Motor complects config was restored with " << mMotorsComplect->size() << " complects";
+	qDebug() << "--Motor complects config was restored with " << mMotorsComplect->size() << " complects";
 }
 
 void DeviceExplorer::saveDevicesInfo()

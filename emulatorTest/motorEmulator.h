@@ -4,7 +4,7 @@
 
 namespace emulators
 {
-class MotorEmulator : public QObject
+class Q_DECL_EXPORT MotorEmulator : public QObject
 {
 	Q_OBJECT
 public:

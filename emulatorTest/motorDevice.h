@@ -1,5 +1,11 @@
 #pragma once
 
+#if defined EMTEST_LIB
+	#define EMTEST_LIB_DLLSPEC Q_DECL_EXPORT
+#else
+	#define EMTEST_LIB_DLLSPEC Q_DECL_IMPORT
+#endif
+
 #include <QtCore/QTimer>
 #include <math.h>
 
@@ -7,7 +13,7 @@
 
 namespace emulators
 {
-class MotorDevice : public QObject
+class Q_DECL_EXPORT MotorDevice : public QObject
 {
 	Q_OBJECT
 public:
@@ -25,7 +31,7 @@ public slots:
 protected:
 	static int const timeout = 10;
 	static constexpr double accelerate = 1.64; //mpss
-	static constexpr double maxSpeed = 1.8; // mps
+	static constexpr double maxSpeedAbs = 1.8; // mps
 	static constexpr float encPerRound = 395;
 	static constexpr double diameter = 0.18; //meters
 	static constexpr double pi()
@@ -42,6 +48,7 @@ protected:
 	float mEncoderValue;
 	double mDestSpeed;
 	double mSpeed;
+	double mDeviation;
 
 	QTimer mUpdater;
 

@@ -8,8 +8,11 @@ QT += core
 QMAKE_CXXFLAGS += -std=c++11
 
 TARGET = emtest
+DEFINES += EMTEST_LIB
 
 include(../globals.pri)
+
+
 
 SOURCES += \
     motorDevice.cpp \

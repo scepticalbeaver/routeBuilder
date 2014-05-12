@@ -17,7 +17,13 @@ RouteController::~RouteController()
 	{
 		return;
 	}
-	qDeleteAll(*mMotorsComplect);
+
+	foreach (MotorComplect *complect, (*mMotorsComplect))
+	{
+		complect->setMotorPower(0);
+		delete complect;
+	}
+
 	delete mMotorsComplect;
 }
 
@@ -103,10 +109,10 @@ void RouteController::checkLoadedDevices()
 {
 	checkRAII();
 	bool const hasValidConfig = mDeviceInfo->hasValidConfig();
-	qDebug() << "has valid config: " << hasValidConfig;
+	qDebug() << "--has valid config: " << hasValidConfig;
 	if (!hasValidConfig)
 	{
-		qDebug() << "re-init requested!";
+		qDebug() << "--re-init requested!";
 		emit jobDone(false);
 		return;
 	}
