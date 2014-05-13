@@ -85,7 +85,7 @@ void InteractiveCommander::printRoundMsg()
 			<< "3) start tracking\n"
 			<< "4) stop tracking\n"
 			<< "5) repeat track\n"
-			<< "6) load track from \"data.txt\" file\n"
+			<< "6) load track from \"data.log\" file\n"
 			<< "7) turn on motors\n"
 			<< "8) stop motors\n"
 			<< "0) exit program\n> ";

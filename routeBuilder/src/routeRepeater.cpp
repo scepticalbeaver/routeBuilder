@@ -34,32 +34,34 @@ void RouteRepeater::stopMotors()
 	}
 }
 
-void RouteRepeater::moveToNextPoint()
+void RouteRepeater::moveToNextPoint(QMap<MotorComplect*, float> &encoderValues)
 {
 	bool hasReachedFinish = mHistoryPointer == mHistorySize - 1;
-	int nextPosition = mHistoryPointer;
-	float curValue = 0;
-	int motorID = 0;
-	foreach (MotorComplect *motor, mMotorComplects.values())
+
+	int nextPosition = mHistorySize;
+	foreach (MotorComplect *motor, encoderValues.keys())
 	{
-		if (nextPosition >= mHistorySize - 1)
-		{
-			break;
-		}
-		motorID = motor->id();
-		curValue = motor->readEncoder();
-		bool isReversed = hasReverseVelocity(motorID);
+		int motorId = motor->id();
+
+		bool isReversed = isCurrentPointBackwards(motorId);
+
 		if (hasReachedFinish)
 		{
-			hasReachedFinish = hasReachedPosition(curValue, valueAtTimePos(motorID, mHistoryPointer), isReversed);
+			hasReachedFinish = hasReachedPosition(encoderValues.value(motor), valueAtTimePos(motorId, mHistoryPointer)
+					, isReversed);
 		}
-		while (hasReachedPosition(curValue, valueAtTimePos(motorID, nextPosition), isReversed))
+
+		int localNextPos = mHistoryPointer;
+		while (localNextPos < mHistorySize - 1
+				&& hasReachedPosition(
+						encoderValues.value(motor)
+						, valueAtTimePos(motorId, localNextPos)
+						, isNegativePointsDiff(motorId, (localNextPos)? localNextPos - 1 : 0, localNextPos)
+						))
 		{
-			if (++nextPosition >= mHistorySize - 1)
-			{
-				break;
-			}
+			localNextPos++;
 		}
+		nextPosition = qMin(localNextPos, nextPosition);
 	}
 	mHistoryPointer = qMin(nextPosition, mHistorySize - 1);
 
@@ -69,27 +71,38 @@ void RouteRepeater::moveToNextPoint()
 	}
 }
 
-bool RouteRepeater::hasReverseVelocity(int const id)
+bool RouteRepeater::isNegativePointsDiff(int const &id, int const &from, int const &to)
 {
-	int before = 0;
-	int after = 0;
-	if (mHistoryPointer < mHistorySize - 1)
-	{
-		before = mHistoryPointer;
-		after = before + 1;
-	}
-	else
-	{
-		before = mHistoryPointer - 1;
-		after = mHistoryPointer;
-	}
+	return mStorage->motorTrace(id, mPlaybackFlow)->at(to) - mStorage->motorTrace(id, mPlaybackFlow)->at(from) < 0;
+}
 
-	return mStorage->motorTrace(id, mPlaybackFlow)->at(after) - mStorage->motorTrace(id, mPlaybackFlow)->at(before) < 0;
+bool RouteRepeater::isNextPointBackwards(int const &id)
+{
+	int after = (mHistoryPointer == mHistorySize - 1)? mHistoryPointer : mHistoryPointer + 1;
+	int before = after - 1;
+
+	return isNegativePointsDiff(id, before, after);
+}
+
+bool RouteRepeater::isCurrentPointBackwards(int const &id)
+{
+	int after = mHistoryPointer;
+	int before = (after == 0)? after : after - 1;
+
+	return isNegativePointsDiff(id, before, after);
+}
+
+bool RouteRepeater::hasReverseVelocity(int const &id, float const &currentValue)
+{
+	return mStorage->motorTrace(id, mPlaybackFlow)->at(mHistoryPointer) - currentValue < 0;
 }
 
 bool RouteRepeater::hasReachedPosition(float const &currentPos, float const finPos, bool const &isReversed)
 {
-	return (!isReversed && (currentPos >= finPos)) || (isReversed && (currentPos <= finPos));
+	//! @todo take epsilon from mapper, which knows about robot encoder params
+	float const epsilon = 20;
+	bool isInLocality = qAbs(currentPos - finPos) < epsilon;
+	return (!isReversed && (currentPos >= finPos)) || (isReversed && (currentPos <= finPos)) || isInLocality;
 }
 
 float RouteRepeater::valueAtTimePos(int const &id, int const &pointer)
@@ -97,31 +110,65 @@ float RouteRepeater::valueAtTimePos(int const &id, int const &pointer)
 	return mStorage->motorTrace(id, mPlaybackFlow)->at(pointer);
 }
 
-void RouteRepeater::adjustMotors()
+QMap<MotorComplect *, float> RouteRepeater::fetchCurrEncoderValues()
 {
-	moveToNextPoint();
-
-	QMap<int, float> difference;
-	float maxDifference = 0.5;
-
-	float curDiff = 0;
-	float curValue = 0;
+	QMap<MotorComplect *, float> result;
 	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
-		curValue = motor->readEncoder();
-		curDiff = qAbs(mStorage->motorTrace(motor->id(), mPlaybackFlow)->at(mHistoryPointer) - curValue);
+		result.insert(motor, motor->readEncoder());
+	}
+	return result;
+}
+
+QMap<MotorComplect *, float> RouteRepeater::blockExcessMotors(QMap<MotorComplect *, float> &encoderValues)
+{
+	QMap<MotorComplect *, float> result;
+	foreach(MotorComplect *motor, mMotorComplects.values())
+	{
+		if (hasReachedPosition(
+				encoderValues.value(motor)
+				, valueAtTimePos(motor->id(), mHistoryPointer)
+				, hasReverseVelocity(motor->id(), encoderValues.value(motor))
+				))
+		{
+			result.insert(motor, isBlockedMotor);
+		}
+	}
+	return result;
+}
+
+void RouteRepeater::adjustMotors()
+{
+	QMap<MotorComplect *, float> currentEncoderValue = fetchCurrEncoderValues();
+
+	moveToNextPoint(currentEncoderValue);
+
+	QMap<MotorComplect *, float> difference = blockExcessMotors(currentEncoderValue);
+	float maxDifference = 0.5;
+
+	//calc length to target(difference) for each wheel
+	foreach (MotorComplect *motor, mMotorComplects.values())
+	{
+		if (difference.value(motor, 0) == isBlockedMotor)
+		{
+			difference.insert(motor, 0);
+			continue;
+		}
+
+		float curDiff = qAbs(mStorage->motorTrace(motor->id(), mPlaybackFlow)->at(mHistoryPointer)
+				- currentEncoderValue.value(motor));
 		if (curDiff >= maxDifference)
 		{
 			maxDifference = curDiff;
 		}
-		difference.insert(motor->id(), curDiff);
+		difference.insert(motor, curDiff);
 	}
 
-	float properVelocity = 0;
+	//calc proper velocity using difference
 	foreach (MotorComplect *motor, mMotorComplects.values())
 	{
-		properVelocity = recommendVelocity * (difference.value(motor->id()) / maxDifference);
-		properVelocity = properVelocity * (hasReverseVelocity(motor->id()))? -1 : 1;
+		float properVelocity = recommendVelocity * (difference.value(motor) / maxDifference);
+		properVelocity *= (hasReverseVelocity(motor->id(), currentEncoderValue.value(motor)))? -1.0 : 1.0;
 		motor->setSpeed(properVelocity);
 	}
 }
