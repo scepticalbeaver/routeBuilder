@@ -39,9 +39,6 @@ public:
 
 protected:
 	static int const timeout = 20;
-	static constexpr float wheelDiameter = 0.2; //[meters]
-	static constexpr float encodersPerRound = 410;
-	static constexpr float maxDiffPerMS = 12 / 10;
 
 	MotorWrap *mMotor;
 	EncoderWrap *mEncoder;

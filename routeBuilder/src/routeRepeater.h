@@ -9,7 +9,7 @@ class RouteRepeater : public QObject
 {
 	Q_OBJECT
 public:
-	explicit RouteRepeater(QVector<MotorComplect *> *complects, TrackStorage *storage, QObject *parent = 0);
+	RouteRepeater(QVector<MotorComplect *> *complects, TrackStorage *storage, QObject *parent = 0);
 	~RouteRepeater() {}
 
 	//! @brief playback start repeating track

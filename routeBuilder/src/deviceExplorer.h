@@ -25,6 +25,8 @@ public:
 	void reinitDevices();
 
 	bool hasValidConfig() const;
+signals:
+	void devicesLoaded();
 
 protected:
 	RobotWrapper mBrickContainer;

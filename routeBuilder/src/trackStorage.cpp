@@ -1,4 +1,5 @@
 #include "trackStorage.h"
+#include "constants.h"
 
 TrackStorage::TrackStorage(QVector<MotorComplect *> *array, QObject *parent)
 	: QObject(parent)

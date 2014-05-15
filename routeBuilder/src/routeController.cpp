@@ -1,4 +1,5 @@
 #include "routeController.h"
+#include "constants.h"
 
 using namespace trikControl;
 using namespace keywords;
@@ -9,11 +10,14 @@ RouteController::RouteController(QThread *guiThread)
 	, mStorage(nullptr)
 	, mRouteRepeater(nullptr)
 	, mMotorsComplect(nullptr)
+	, mCoordinateMapper(nullptr)
 {
 }
 
 RouteController::~RouteController()
 {
+	mCoordinateMapper->stop();
+
 	if (mMotorsComplect == nullptr)
 	{
 		return;
@@ -34,7 +38,16 @@ void RouteController::afterThreadInit()
 	mDeviceInfo = new DeviceExplorer(mGuiThread, mMotorsComplect, this);
 	mStorage = new TrackStorage(mMotorsComplect, this);
 	mRouteRepeater = new RouteRepeater(mMotorsComplect, mStorage, this);
+	mCoordinateMapper = new CoordinateMapper(mMotorsComplect, 0, 1, this);
+
 	connect(mRouteRepeater, SIGNAL(playbackDone()), SLOT(playbackStopped()));
+	connect(mDeviceInfo, SIGNAL(devicesLoaded()), mCoordinateMapper, SLOT(reset()));
+
+	if (mDeviceInfo->hasValidConfig())
+	{
+		mCoordinateMapper->reset();
+		mCoordinateMapper->start();
+	}
 }
 
 
@@ -73,7 +86,7 @@ void RouteController::startTracking()
 {
 	checkRAII();
 	resetEncoders();
-	mStorage->startRecording(TrackingFlows::mainTrackingFlow());
+	mStorage->startRecording(TrackingFlows::mainTrackingFlow);
 	emit jobDone(true);
 }
 
@@ -87,14 +100,14 @@ void RouteController::stopTracking()
 void RouteController::loadTrackFromFile()
 {
 	checkRAII();
-	emit jobDone(mStorage->loadFromFile(QString("data.log"), TrackingFlows::mainTrackingFlow()));
+	emit jobDone(mStorage->loadFromFile(QString("data.log"), TrackingFlows::mainTrackingFlow));
 }
 
 void RouteController::playback()
 {
 	checkRAII();
 	resetEncoders();
-	mRouteRepeater->playback(TrackingFlows::mainTrackingFlow());
+	mRouteRepeater->playback(TrackingFlows::mainTrackingFlow);
 }
 
 void RouteController::switchMotors(bool const willTurnOn)

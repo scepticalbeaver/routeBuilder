@@ -29,6 +29,10 @@ DeviceExplorer::DeviceExplorer(QThread *guiThread, QVector<MotorComplect *> *com
 	mDeviceInfo = new QSettings(settingsFile, QSettings::IniFormat, this);
 
 	loadDeviceConfiguration();
+	if (hasValidConfig())
+	{
+		emit devicesLoaded();
+	}
 }
 
 DeviceExplorer::~DeviceExplorer()
@@ -82,6 +86,10 @@ void DeviceExplorer::reinitDevices()
 	}
 	qDebug() << "--motors founded: " << mMotorsComplect->size();
 	saveDevicesInfo();
+	if (mMotorsComplect->size())
+	{
+		emit devicesLoaded();
+	}
 }
 
 bool DeviceExplorer::hasValidConfig() const

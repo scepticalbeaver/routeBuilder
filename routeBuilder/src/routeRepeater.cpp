@@ -1,11 +1,12 @@
 #include "routeRepeater.h"
+#include "constants.h"
 
 RouteRepeater::RouteRepeater(QVector<MotorComplect *> *complects, TrackStorage *storage, QObject *parent)
 	: QObject(parent)
 	, mStorage(storage)
 	, mSharedComplects(complects)
 	, mHistoryPointer(0)
-	, mPlaybackFlow(keywords::TrackingFlows::mainTrackingFlow())
+	, mPlaybackFlow(keywords::TrackingFlows::mainTrackingFlow)
 {
 	connect(&mTimer, SIGNAL(timeout()), SLOT(adjustMotors()));
 }
@@ -21,7 +22,7 @@ void RouteRepeater::playback(int const &trackFlow)
 		motor->resetEncoder();
 	}
 
-	mStorage->startRecording(keywords::TrackingFlows::alternativeFlow());
+	mStorage->startRecording(keywords::TrackingFlows::alternativeFlow);
 
 	mTimer.start(timeout);
 }

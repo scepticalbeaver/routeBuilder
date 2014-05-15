@@ -5,6 +5,7 @@
 #include "trackStorage.h"
 #include "routeRepeater.h"
 #include "deviceExplorer.h"
+#include "coordinateMapper.h"
 
 //! @class RouteController is a facade of route-repeat tech
 //! may be used in other thread
@@ -38,6 +39,7 @@ protected:
 	TrackStorage *mStorage;
 	RouteRepeater *mRouteRepeater;
 	QVector<MotorComplect *> *mMotorsComplect;
+	CoordinateMapper *mCoordinateMapper;
 
 	void turnPowerMotors(int const power);
 	void checkRAII();

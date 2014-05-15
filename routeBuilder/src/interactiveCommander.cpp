@@ -133,6 +133,6 @@ void InteractiveCommander::stopAuxThread()
 
 void InteractiveCommander::routeActionFinished(const bool successfully)
 {
-	cout << "Action was finished " << ((successfully)? "succesffuly\n" : "with fails\n");
+	cout << "Action has finished " << ((successfully)? "succesffuly\n" : "with fails\n");
 	loopRound();
 }
